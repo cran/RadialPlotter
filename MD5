@@ -1,0 +1,16 @@
+702aaf652272aaeddb3a8e8f17e8c5ef *DESCRIPTION
+1fe3541c8fd0419c3aa6027f11bcad8c *NAMESPACE
+50908de900fac7f8f54e8aaeca7de5e1 *R/RadialPlotter.R
+a27f053ba3dff9cf0bf55a3db268a879 *data/EDdata.RData
+252d847594c2d4305184095fbed1d5dd *man/EDdata.Rd
+6434316786e81a187cd4fc49d30e8380 *man/RadialPlotter-package.Rd
+d7315e86c65369350af0fd2d4e393fea *man/RadialPlotter.Rd
+e9e03dd8c06f1755c78c17f4d824ed22 *src/AppCovar.f90
+fc21ce7c0da9e21fd2199e1be40e2a00 *src/CAM.f90
+bc70e22eb670ace69c6aa5393cb56e9d *src/FMMED.f90
+213a1ffac41986a06ce44e8caf13e1c9 *src/FineComp.f90
+2a8447ae7f2c18ce9aaed1774b9cf7a4 *src/FineED.f90
+9a43685a7bd9982461a060aa863179ce *src/FineED1.f90
+0f969b356db51887769030d93fd59ae2 *src/GJordan.f90
+abc80689b93dc6e60081da391848c561 *src/diag.f90
+0ad57bacc81d45481506d91b9110a1e4 *src/inverse.f90

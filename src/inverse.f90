@@ -25,9 +25,9 @@ subroutine inverse(a,n,error,tol)
    real(kind=8)::b(n,n)
    integer(kind=4)::i
    !
-   b=0.0
+   b=0.0D+00
    do i=1,n
-     b(i,i)=1.0
+     b(i,i)=1.0D+00
    end do  
    call GJordan(a,b,n,n,error,tol)   
    a=b

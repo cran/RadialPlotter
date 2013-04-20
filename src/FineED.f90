@@ -26,7 +26,7 @@ subroutine FineED(ED,Error,n,ncomp,spreadsigma,&
 !               Galbraith, RF, Green PF, 1990. Estimating the component ages in a 
 !               finite mixture. Nuclear Tracks and Radiation Measurements, 17, page 197-206.
 !               
-! Dependence  :: subroutine FMMED
+! Dependence  :: subroutine FMMED; subroutine kmeans
 !
 !------------------------------------------------------------------------------------------------------
   implicit none
@@ -40,19 +40,26 @@ subroutine FineED(ED,Error,n,ncomp,spreadsigma,&
   real   (kind=8),intent(out)::maxlik
   real   (kind=8),intent(out)::BIC
   real   (kind=8),intent(in)::eps 
+  !local variables for subroutine kmeans
+  integer(kind=4),parameter::iter=20
+  integer(kind=4),parameter::nstart=100
+  integer(kind=4)::belo(n),clusp(ncomp)
+  real   (kind=8)::energ(ncomp),clust(ncomp)
+  integer(kind=4)::ifault
   ! local variables
   integer(kind=4)::i,j
   real(kind=8)::minBIC
   real(kind=8)::sMaxlik
-  real(kind=8),dimension(2,ncomp)::cpars
+  real(kind=8),dimension(2,ncomp)::cpars,kpars
   real(kind=8),dimension(n)::sED,sError
   !
   sError=Error/ED
   sED=log(ED)
-  minBIC=1.e30
-  pars(1,:)=1.0/real(ncomp)
+  minBIC=1.0D+30
   !
   do i=1,3
+    !
+    pars(1,:)=1.0D+00/real(ncomp)
     !
     do j=1,ncomp
       pars(2,j)=minval(sED)+(maxval(sED)-minval(sED))*real(j)/real(ncomp+i-2)
@@ -68,6 +75,21 @@ subroutine FineED(ED,Error,n,ncomp,spreadsigma,&
     end if
     !
   end do
+  !
+  call kmeans(1,n,ncomp,iter,nstart, &
+              sED,belo,clust,clusp,energ,ifault)
+  !
+  kpars(1,:)=1.0D+00/real(ncomp)
+  kpars(2,:)=clust
+  !
+  call FMMED(sED,sError,n,ncomp,spreadsigma,kpars,&
+               maxlik,BIC,maxiter,eps)
+  !
+  if(BIC<minBIC)  then
+    cpars=kpars
+    minBIC=BIC
+    sMaxlik=maxlik
+  end if
   !
   pars=cpars
   BIC=minBIC

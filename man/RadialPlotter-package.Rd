@@ -3,20 +3,26 @@
 \docType{package}
 \title{Package for OSL equivalent dose analysis and radial plot drawing }
 \description{
-This package performs statistical age models (log-scale) analysis and radial plot drawing.}
+This package performs statistical age models (log-scale) analysis and radial plot drawing. Routines for statistical age models analysis using fortran subroutines wrapped function 'RadialPlotter'. Facilitating the analysis of Galbraith's statistical age models, that are: \cr
+\cr
+Central age model (CAM) \cr
+Finite mixture age model (FMM) \cr
+Minimum age model with three parameters (MAM3) \cr
+Minimum age model with four parameters (MAM4) \cr
+}
 \details{
 \tabular{ll}{
 Package: \tab RadialPlotter\cr
 Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2013-03-20\cr
+Version: \tab 1.5\cr
+Date: \tab 2013-04-20\cr
 License: \tab GPL-3\cr
 }
 }
 \author{
-
-Peng Jun
-
+\tabular{ll}{
+Peng Jun \tab University of Chinese Academy of Sciences, Beijing, China
+}
 \bold{Package maintainer}
 
 Peng Jun

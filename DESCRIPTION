@@ -2,15 +2,16 @@ Package: RadialPlotter
 Type: Package
 Title: Package for statistical age models analysis in optically
         stimulated luminescence dating
-Version: 1.0
-Date: 2013-03-20
+Version: 1.5
+Date: 2013-04-20
 Author: Peng Jun
 Maintainer: Peng Jun <pengjun10@mails.ucas.ac.cn>
 Description: Package for estimating parameters of statistical age
         models in optically stimulated luminescence dating dynamically.
 License: GPL-3
 Depends: R (>= 2.15.3)
-Packaged: 2013-03-21 03:15:53 UTC; pengjun
+URL: http://CRAN.R-project.org/package=RadialPlotter
+Packaged: 2013-04-20 14:09:01 UTC; pengjun
 NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2013-03-21 07:53:31
+Date/Publication: 2013-04-20 19:17:04

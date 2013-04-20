@@ -1,0 +1,10 @@
+Version for package 'RadialPlotter'
+
+Version 1.5
+        * Both MAM3 (minimum age model with three parameters) and MAM4 (minimum age model with four parameters) are bundled 
+          to this version. See the PDF manual for more information.
+Version 1.0
+        * OSL statistical age models analysis for CAM (central age model) and FMM (finite mixture age model) are available, 
+          a radial plot can also be drawn using this primitive version. See the PDF manual for more information.
+
+

@@ -47,17 +47,17 @@ subroutine FMMED(ED,Error,n,ncomp,spreadsigma,&
   real(kind=8),dimension(n,ncomp)::p,pp
   real(kind=8),dimension(n,ncomp)::wp
   real(kind=8),dimension(n,ncomp)::pf 
-  real(kind=8),parameter::PI=3.141592653589793238462643383279502884197
+  real(kind=8),parameter::PI=3.141592653589793238462643383279502884197D+00
   integer(kind=4)::i,j
   !
   ! set the weight value
-  w=1.0/(spreadsigma**2+Error**2)
+  w=1.0D+00/(spreadsigma**2+Error**2)
   !
   ! start the major loop
   do i=1,maxiter
     !
     do j=1,ncomp
-      f(:,j)=sqrt(w)*exp(-0.5*w*(ED-pars(2,j))**2)
+      f(:,j)=sqrt(w)*exp(-0.5D+00*w*(ED-pars(2,j))**2)
       pf(:,j)=pars(1,j)*f(:,j)
     end do
     !
@@ -76,8 +76,8 @@ subroutine FMMED(ED,Error,n,ncomp,spreadsigma,&
     !
     ! calculate the maximum logged-likelihood value
     ! and BIC value
-    maxlik=sum(log(1.0/sqrt(2.0*PI)*sum(pf,2)))
-    BIC=-2.0*maxlik+(2.0*real(ncomp)-1.0)*log(real(n))
+    maxlik=sum(log(1.0D+00/sqrt(2.0D+00*PI)*sum(pf,2)))
+    BIC=-2.0D+00*maxlik+(2.0D+00*real(ncomp)-1.0D+00)*log(real(n))
     !
     ! test for converge
     if( sum(abs(pars(2,:)-newpars(2,:)))+&

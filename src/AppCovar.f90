@@ -55,16 +55,16 @@ subroutine AppCovar(pars,ncomp,ED,Error,n,&
   !
   z=log(ED)
   s=Error/ED
-  w=1.0/(spreadsigma**2+s**2)
+  w=1.0D+00/(spreadsigma**2+s**2)
   !
-  AA=0.0
-  BB=0.0
-  A=0.0
-  B=0.0
-  C=0.0
+  AA=0.0D+00
+  BB=0.0D+00
+  A=0.0D+00
+  B=0.0D+00
+  C=0.0D+00
   !
   do i=1,ncomp
-    pf(:,i)=sqrt(w)*exp(-0.5*w*(z-pars(2,i))**2)*pars(1,i)
+    pf(:,i)=sqrt(w)*exp(-0.5D+00*w*(z-pars(2,i))**2)*pars(1,i)
   end do
   !
   rspf=sum(pf,2)
@@ -73,12 +73,12 @@ subroutine AppCovar(pars,ncomp,ED,Error,n,&
     p(j,:)=pf(j,:)/rspf(j)
   end do
   !
-  II=0.0
+  II=0.0D+00
   !
   do i=1,ncomp
     AA(:,i)=w*(z-pars(2,i))
     BB(:,i)=-w+(w*(z-pars(2,i)))**2
-    II(i,i)=1.0
+    II(i,i)=1.0D+00
   end do
   !
   do i=1,ncomp-1
@@ -113,7 +113,7 @@ subroutine AppCovar(pars,ncomp,ED,Error,n,&
   !
   call diag(covar,2*ncomp-1,diagcovar)
   !
-  if(any(diagcovar<0.0)) iferror=1
+  if(any(diagcovar<0.0D+00)) iferror=1
   !
   ParError(1,1:ncomp-1)=sqrt(diagcovar(1:ncomp-1))
   ParError(1,ncomp)=sqrt(sum(covar(1:ncomp-1,1:ncomp-1)))

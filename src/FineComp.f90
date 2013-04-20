@@ -46,7 +46,7 @@ subroutine FineComp(ED,Error,n,goodcomp,spreadsigma,&
   real(kind=8),allocatable::pars(:,:) 
   integer(kind=4)::i,j
   !
-  minBIC=1.e30
+  minBIC=1.0D+30
   goodcomp=0
   !
   do i=2,maxcomp

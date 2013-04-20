@@ -38,7 +38,7 @@ subroutine GJordan(A,B,N,M,error,tol)
   ! start the major loop
   do k=1,N
   !
-    Q=0.0
+    Q=0.0D+00
     ! find out the largest absolute value from row and colum index 
     ! that range from k to N, and save row, colum index that it belongs to
       do i=k,N

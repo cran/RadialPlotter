@@ -16,7 +16,7 @@ subroutine gradient(pars,ED,Error,npars,iter,&
 ! grad(npars),  output:: real values, the calculated gradient
 ! value,        output:: real value, the caluculated value for the specified function
 !
-! Author:: Peng Jun, 2013.04.01
+! Author:: Peng Jun, 2013.04.01, revised in 2013.04.21
 !
 ! Dependence:: inner function fun34; subroutine pnorm; function alnorm
 !
@@ -73,7 +73,21 @@ subroutine gradient(pars,ED,Error,npars,iter,&
   ! create matrix A with iter rows, npars columns.
   ! in each iteration, generating a new row by reduce
   ! h by 1/v.
-  do i=1,iter
+  !.................................................
+  do j=1,npars
+    a(1,j)=(fun34(pars+h*Diag(j,:))-&
+            fun34(pars-h*Diag(j,:)))/(2.0D+00*h(j))
+  end do
+  ! check if any Inf or NaN presents in a(i,:)
+  if( any( a(1,:) .ne. a(1,:) ) .or. &
+      any( a(1,:)+1.0D+00==a(1,:) )  )  then
+    errorflag=1
+    return
+  end if
+  ! successively reduce h by 1/v.
+  h=h/real(v)
+  !.................................................
+  do i=2,iter
     do j=1,npars
       if( i/=1 .and. abs(a(i-1,j))<1.0D-20 )  then
         a(i,j)=0.0D+00
@@ -91,7 +105,7 @@ subroutine gradient(pars,ED,Error,npars,iter,&
     ! successively reduce h by 1/v.
     h=h/real(v)
   end do
-  !
+  !.................................................
   ! apply Richardson Extrapolation 
   ! to improve the accuracy of gradient
   do i=1,iter-1

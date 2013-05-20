@@ -154,5 +154,6 @@ I also thank Silke Schmidt for providing published OSL data (Silke Schmidt et al
   RadialPlotter(EDdata,ncomp=-2,addsigma=0.2,maxiter=100)
 }
 
-\keyword{RadialPlotter}
-
+\keyword{CAM}
+\keyword{FMM}
+\keyword{MAM}

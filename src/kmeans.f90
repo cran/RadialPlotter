@@ -17,7 +17,7 @@ subroutine kmeans(ndim,npoi,nclu,maxiter,nstart, &
 ! clust(ndim,nclu)   :: output, real values, the estimated cluster centers
 ! clusp(nclu)        :: output, integer values, how many points in each cluster
 ! energ(nclu)        :: output, real values, the calculated energy of each cluster
-! ifault             :: out put, integer, 0 for a successful work, otherwise 2
+! ifault             :: output, integer, 0 for a successful work, otherwise 2
 !
 ! Author:: Peng Jun, 2013.03.14
 ! 

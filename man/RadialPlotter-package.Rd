@@ -14,8 +14,8 @@ Minimum age model with four parameters (MAM4) \cr
 \tabular{ll}{
 Package: \tab RadialPlotter\cr
 Type: \tab Package\cr
-Version: \tab 1.5\cr
-Date: \tab 2013-04-20\cr
+Version: \tab 1.6\cr
+Date: \tab 2013-05-20\cr
 License: \tab GPL-3\cr
 }
 }
@@ -32,3 +32,5 @@ Peng Jun
 Galbraith, R.F., 1988. Graphical Display of Estimates Having Differing Standard Errors. Technometrics, 30 (3), pp. 271-281.
 }
 \keyword{package}
+\keyword{OSL dating}
+\keyword{age models}

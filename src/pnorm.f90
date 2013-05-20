@@ -20,11 +20,3 @@ subroutine pnorm(x,n,upper)
   return
 end subroutine pnorm
 
-
-
-
-
-
-
-
-

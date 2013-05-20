@@ -23,7 +23,7 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar, &
 !
 ! Dependency:: subroutine GJordan, inter function fun34
 !
-! Author:: Peng Jun, 2013.01.27, revised in 2013.03.17
+! Author:: Peng Jun, 2013.01.27, revised in 2013.03.17, revised again in 2013.04.21
 !
 ! Reference:  Jose Pinheiro, Douglas Bates, Saikat DebRoy, Deepayan Sarkar and the
 !             R Development Core Team (2013). nlme: Linear and Nonlinear Mixed
@@ -51,14 +51,17 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar, &
   real  (kind=8)::diagpar(npars,npars)
   real  (kind=8),allocatable::frac(:),cfrac(:)
   real  (kind=8)::ffrac(1+2*npars)
-  real  (kind=8),allocatable::cols(:,:),ccols(:,:),shifted(:,:)
+  real  (kind=8),allocatable::cols(:,:),ccols(:,:),shifted(:,:),transcols(:,:)
   real  (kind=8)::pcols(npars,2*npars+1)
   real  (kind=8),allocatable::xcols(:,:),cxcols(:,:)
   real  (kind=8),allocatable::pxcols(:,:)
   real(kind=8),parameter::eps=2.013409D-05 ![.Machine$double.eps^0.3 in R]                    
   !
   errorflag=0
-  !
+  ! Decide the incr values
+  ! for each initial par in pars, check if it
+  ! is smaller than minabspar, the incr will
+  ! be decided through this check
   do i=1,npars
     if( abs(pars(i))<=minAbsPar )  then
       incr(i)=minAbsPar*eps
@@ -67,113 +70,149 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar, &
     end if
   end do
   !
+  ! build a diagal matirx diagpar
   diagpar=0.0D+00
   do i=1,npars
     diagpar(i,i)=1.0D+00
   end do
-  !
+  ! creat ffrac with length of 2*npars+1
+  ! and specify values for it
   ffrac(1)=1.0D+00
   ffrac(2:npars+1)=incr
   ffrac(npars+2:2*npars+1)=incr**2
-  !
+  ! create pcols to be npars rows
+  ! and 2*npars columns, then storing
+  ! diagpar in it
   pcols(:,1)=0.0D+00
-  pcols(:,2:(npars+1))=diagpar
-  pcols(:,(npars+2):(2*npars+1))=-diagpar
-  !
-  allocate(cols(1:npars,1:(npars*(npars-1)/2)))
-  !
-  allocate(frac(1:(npars*(npars-1)/2)))
+  pcols(:,2:npars+1)=diagpar
+  pcols(:,npars+2:2*npars+1)=-diagpar
+  ! in a total of (npars-1) times looping
+  ! add  (npars-i) columns to cols in each loop number
+  ! hence a toal of npars*(npars-1)/2 columns for cols
+  allocate( cols(1:npars,1:npars*(npars-1)/2) )
+  ! in a total of (npars-1) times looping
+  ! add (npars-i) number to frac in each loop number
+  ! hence a total of npars*(npars-1)/2 values for frac
+  allocate( frac(1:npars*(npars-1)/2) )
   !
   ncols=0
   do i=1,npars-1
-    !
-    allocate(ccols(1:npars,1:npars-i))
-    allocate(cfrac(1:npars-i))
-    !
+    ! in each loop(i), generate ccols and cfrac with 
+    ! npars rows (npars-i) columns 
+    allocate( ccols(1:npars,1:npars-i) )
+    allocate( cfrac(1:npars-i) )
+    ! fill ccols and cfrac in each loop
     do j=i+1,npars
       ccols(:,j-i)=diagpar(:,i)+diagpar(:,j)
       cfrac(j-i)=incr(i)*incr(j)       
     end do 
-    !
+    ! now store ccols and cfrac to cols
+    ! and frac respectively
     cols(:,ncols+1:ncols+npars-i)=ccols
     frac(ncols+1:ncols+npars-i)=cfrac
-    !
+    ! delocate ccols and cfrac, preparing
+    ! for new allocations
     deallocate(ccols)
     deallocate(cfrac)
-    !
+    ! update started filling index ncols
     ncols=ncols+npars-i 
     !
   end do
-  !
-  allocate(ccols(1:npars,1:npars*(npars-1)/2+2*npars+1))
-  ccols(:,1:(2*npars+1))=pcols
+  ! now add up pcols and cols togeteher to be ccols
+  ! ccols has a total of ( 2*npars+1 + npars*(npars-1)/2 ) columns
+  allocate( ccols(1:npars,1:npars*(npars-1)/2+2*npars+1) )
+  ccols(:,1:2*npars+1)=pcols
   ccols(:,2*npars+2:npars*(npars-1)/2+2*npars+1)=cols
+  ! not need cols presently, so release it
   deallocate(cols)
+  ! allocate cols again to store ccols, and release ccols
   allocate(cols(1:npars,1:npars*(npars-1)/2+2*npars+1))
   cols=ccols
   deallocate(ccols)
-  !
-  allocate(cfrac(1:npars*(npars-1)/2+2*npars+1))
+  ! now add up ffrac and frac together to be cfrac,
+  ! cfrac has a total of ( 2*npars+1 + npars*(npars-1)/2 ) values
+  allocate( cfrac(1:npars*(npars-1)/2+2*npars+1) )
   cfrac(1:2*npars+1)=ffrac
   cfrac(2*npars+2:npars*(npars-1)/2+2*npars+1)=frac
+  ! not need frac so release it
   deallocate(frac)
+  ! allocate frac again, store cfrac in it then release cfrac
   allocate(frac(1:npars*(npars-1)/2+2*npars+1))
   frac=cfrac
   deallocate(cfrac) 
-  ! 
-  p=size(cols,dim=2)
+  ! specify p to be the column number of cols
+  ! that is npars*(npars-1)/2+2*npars+1
+  p=npars*(npars-1)/2+2*npars+1
+  ! now allocate shifted to be the same shape 
+  ! with cols and store some values in it
   allocate(shifted(1:npars,p))
   do i=1,p
     shifted(:,i)=pars+incr*cols(:,i)
   end do
-  !
-  cols=transpose(cols)
-  !
+  ! allocate transcols to store transposed cols
+  ! transcols has p rows, npars columns
+  allocate( transcols(1:p,1:npars) )
+  transcols=transpose(cols)
+  ! now cols will not be needed, release it
+  deallocate(cols)
+  ! allocate pxcols to store transcols 
+  ! in differ style
   allocate(pxcols(p,1+2*npars))
-  pxcols(:,1)=1
-  pxcols(:,2:npars+1)=cols
-  pxcols(:,npars+2:2*npars+1)=cols**2
+  pxcols(:,1)=1.0D+00
+  pxcols(:,2:npars+1)=transcols
+  pxcols(:,npars+2:2*npars+1)=(transcols)**2
   !
   ncols=0
-  !
-  allocate(xcols(p,1:npars*(npars-1)/2))
-  !
+  ! now allocate xcols with p rows and 
+  ! npars*(npars-1)/2 columns
+  allocate( xcols(p,1:npars*(npars-1)/2) )
+  ! 
   do i=1,npars-1
+    ! in each loop, allocate cxcols 
     allocate(cxcols(p,1:npars-i))
     do j=i+1,npars
-      cxcols(:,j-i)=cols(:,i)*cols(:,j)
+      cxcols(:,j-i)=transcols(:,i)*transcols(:,j)
     end do
+    ! store cxcols to xcols and release it
     xcols(:,ncols+1:ncols+npars-i)=cxcols
     deallocate(cxcols)
-    !
+    ! update started filling index
     ncols=ncols+npars-i  
   end do
-  !
-  allocate(cxcols(p,1:1+2*npars+npars*(npars-1)/2))
+  ! now store pxcols and xcols together to cxcols
+  allocate( cxcols(p,1:1+2*npars+npars*(npars-1)/2) )
   cxcols(:,1:1+2*npars)=pxcols
   cxcols(:,2+2*npars:1+2*npars+npars*(npars-1)/2)=xcols
+  ! release xcols and pxcols
   deallocate(xcols)
   deallocate(pxcols)
+  ! allocate xcols again to store cxcols
   allocate(xcols(p,1:1+2*npars+npars*(npars-1)/2))
   xcols=cxcols
+  ! release cxcols
   deallocate(cxcols)
-  !
+  ! allocate pxcols again and store some
+  ! values to it then release shifted
+  ! now pxcols has p rows and 1 column
   allocate(pxcols(1:p,1))
-  !
   do i=1,p
     pxcols(i,:)=fun34(shifted(:,i))
   end do
-  !
   deallocate(shifted)
-  !
+  ! solve xcols %*% X = pxcols
+  ! store solved X values in pxcols
   call GJordan(xcols,pxcols,p,1,solerror,tol)
   if(solerror==1)  errorflag=1
-  !
+  ! scale pxcols with frac and release frac,
+  ! release xcols
   pxcols(:,1)=pxcols(:,1)/frac
   deallocate(xcols)
   deallocate(frac)
   ncols=2*npars+2 
-  !
+  ! fill diagpar with some new values,  note that
+  ! non-diagnal part of digpar are zeros
+  ! these value are comes from pxcols, and will
+  ! be used to constructe hessian matrix
   do j=1,npars
     do i=1,npars
         if (i==j) diagpar(i,j)=pxcols(1+npars+i,1)
@@ -181,15 +220,15 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar, &
     end do
     ncols=ncols+npars-j
   end do
-  !
+  ! estimate gradients
   do i=1,npars
     gradient(i)=pxcols(1+i,1)
   end do
-  !
+  ! estimate fun(pars)
   value=pxcols(1,1)
-  !
+  ! now pxcols will not be needed, release it
   deallocate(pxcols)
-  !
+  ! estimate hessian matrix
   hessian=diagpar+transpose(diagpar)
   !
   ! check Inf and NaN for value
@@ -201,7 +240,7 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar, &
   ! check Inf and NaN for hessian
   if( any(hessian .ne. hessian) .or. &
       any(hessian+1.0D+00==hessian) )    errorflag(3)=1
-  !
+  ! if no error appears, return 
   return
   !
   contains

@@ -61,7 +61,7 @@ subroutine MamED(ED,Error,nED,pars,spars,value, npars, &
                     iwa(3*npars), isave(44)
   real   (kind=8):: f, l(npars), &
                     u(npars), g(npars), dsave(29), &
-                    wa(2*m*npars+4*npars+12*m*m+12*m) 
+                    wa(2*m*npars+5*npars+11*m*m+8*m) 
   character(len=60)::task,csave 
   !
   ! variables for subroutine fdhessian

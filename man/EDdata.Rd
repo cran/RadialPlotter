@@ -28,3 +28,4 @@ Unpublished OSL equivalent doses data
        main='Sample.Tengger',xlab='De(Gy)',ylab='Density')
 }
 \keyword{datasets}
+\keyword{OSL De}

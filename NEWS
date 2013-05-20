@@ -1,5 +1,6 @@
 Version for package 'RadialPlotter'
-
+Version 1.6
+        * Possible complier dependent errors are removed.
 Version 1.5
         * Both MAM3 (minimum age model with three parameters) and MAM4 (minimum age model with four parameters) are bundled 
           to this version. See the PDF manual for more information.

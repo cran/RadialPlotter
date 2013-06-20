@@ -27,5 +27,6 @@ Unpublished OSL equivalent doses data
   plot(density(x[,1], weights=x[,2]/sum(x[,2])),col='blue',
        main='Sample.Tengger',xlab='De(Gy)',ylab='Density')
 }
-\keyword{datasets}
-\keyword{OSL De}
+\keyword{package RadialPlotter}
+\keyword{OSL dating}
+\keyword{OSL age models}

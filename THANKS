@@ -1,2 +1,3 @@
 Thanks Rex Gablraith's permission to revise the R code concerning radial plot drawing and to use it in this package.
 Thanks Silke Schmidt for providing published OSL data for checking and testing routines concerning MAM and CAM analysis.
+Thanks Andrzej Bluszcz, who helps me a lot during the writting of function 'decomp'.

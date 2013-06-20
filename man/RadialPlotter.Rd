@@ -82,7 +82,7 @@ Galbraith, R.F., 2005. Statistics for Fission Track Analysis, Chapman & Hall/CRC
 
 Galbraith, R.F., 2010. On plotting OSL equivalent doses. Ancient TL, 28 (1), pp. 1-10.
 
-Galbraith, R.F., Roberts, R.G., 2012. Statistical aspects of equivalent dose and error calculation and display in OSL dating: An overview and some recommendations. Quaternary Geochronology,11, pp. 1-27.
+Galbraith, R.F., Roberts, R.G., 2012. Statistical aspects of equivalent dose and error calculation and display in OSL dating: An overview and some recommendations. Quaternary Geochronology, 11, pp. 1-27.
 
 Zhu, C., Byrd, R.H., Lu, P., Nocedal, J., 1994. 'L-BFGS-B: FORTRAN Subroutines for Large Scale Bound Constrained Optimization' Tech. Report, NAM-11, EECS Department, Northwestern University.
 
@@ -117,11 +117,12 @@ I also thank Silke Schmidt for providing published OSL data (Silke Schmidt et al
 
 \examples{
 #
-# Loading package 'RadialPlotter'
-  library(RadialPlotter)
 #
-# Loading the equivalent dose data
+# Loading equivalent dose data
   data(EDdata)
+#
+#
+ require(graphics)
 #
 # Specifying the number of component to be 1 to do central age model analysis
   RadialPlotter(EDdata,ncomp=1)
@@ -153,7 +154,7 @@ I also thank Silke Schmidt for providing published OSL data (Silke Schmidt et al
 # and will result in an error
   RadialPlotter(EDdata,ncomp=-2,addsigma=0.2,maxiter=100)
 }
-
-\keyword{CAM}
-\keyword{FMM}
-\keyword{MAM}
+\keyword{package RadialPlotter}
+\keyword{Central Age Model (CAM)}
+\keyword{Finite Mixture Age Model (FMM)}
+\keyword{Minimum Age Model (MAM)}

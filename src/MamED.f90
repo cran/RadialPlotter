@@ -1,4 +1,4 @@
-subroutine MamED(ED,Error,nED,pars,spars,value, npars, &
+subroutine MamED(ED,Error,nED,pars,spars,value,npars,&
                  sigma,maxiter,tol,bound,message)
 !-------------------------------------------------------------------------------------------------
 ! MamED attempts to estimate the values of the parameters in Minimum Age Models
@@ -21,14 +21,18 @@ subroutine MamED(ED,Error,nED,pars,spars,value, npars, &
 ! maxiter, input            :: integer, the allowed maximum iterative numbers
 ! tol, input                :: real value, the allowed maximum tolerance for the hessian to be non-sigular
 ! bound(2,npars), input     :: real values, the low and up boundary for L-BFGS-B method
-! message(5)                :: integer values, the error message generated in the analysis, message(1) is about 
-!                              the subroutine fdhessian, a successful hessian approximation gives 0, otherwise 1; 
-!                              message(2) is about the the inverse of hessian matrix, 1 for sigular, otherwise 0; 
-!                              message(3) is about the parameters' standard errors, if they can be approximated, 
-!                              0 will be given, otherwise 1; message(4) is about the boundary, if any estimated 
-!                              parameter is near the boundary, 1 will returns, otherwise 0; message(5) is about 
-!                              the comparision between gama and mu for MAM4, if gama>mu, 1 will return, otherwise 0
-!
+! message(5)                :: integer values, the error message generated in the analysis:
+!                              1) message(1) is about gradient estimation in l-bfgs-b using subroutine gradient,
+!                                 if fails return 1, else 0
+!                              2) message(2) is about subroutine fdhessian, if hessian matrix can be approximated 
+!                                 and inversed, message(2) gives 0, else 1;
+!                              3) message(3) is about parameters' standard errors, if they can be approximated, 
+!                                 0 will be given, otherwise 1;
+!                              4) message(4) is about the boundary, if any estimated parameter is near the boundary, 
+!                                 1 will returns, otherwise 0;
+!                              5) message(5) is about the comparision between gama and mu for MAM4, if gama>mu, 1 will return, 
+!                                 otherwise 0.
+!                              
 ! Author :: Peng Jun, 2013.03.15, revised in 2013.04.01
 ! 
 ! Reference :: Galbraith, R.F., Roberts, R.G., Laslett, G.M., Yoshida, H. & Olley, J.M., 1999. Optical dating of
@@ -68,7 +72,7 @@ subroutine MamED(ED,Error,nED,pars,spars,value, npars, &
   real   (kind=8),parameter::minAbsPar=0.0D+00     
   real   (kind=8)::grad(npars)
   real   (kind=8)::hessian(npars,npars)
-  integer(kind=4)::errorflag(3)
+  integer(kind=4)::errorflag(4)
   !
   ! local variables for subroutine gradient
   integer(kind=4),parameter::iter=6
@@ -140,7 +144,7 @@ subroutine MamED(ED,Error,nED,pars,spars,value, npars, &
   call fdhessian(pars,sED,sError,npars,nED,tol, &
                  minAbsPar,hessian,grad,value,errorflag)
   ! check if error appears during the approximation
-  if(any(errorflag==1))   then
+  if(any(errorflag/=0))   then
     message(2)=1
     return
   end if

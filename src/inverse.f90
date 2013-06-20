@@ -32,4 +32,4 @@ subroutine inverse(a,n,error,tol)
    call GJordan(a,b,n,n,error,tol)   
    a=b
    return
- end subroutine inverse
+end subroutine inverse

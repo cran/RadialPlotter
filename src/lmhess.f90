@@ -1,45 +1,48 @@
-subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar,&
-                     hessian,gradient,value,errorflag)
+subroutine lmhess(pars,xdat,ydat,npars,ndat,tol,minAbsPar,&
+                  hessian,gradient,value,errorflag,model)
 !--------------------------------------------------------------------------------------------------
 ! subroutine fdhessian is used to calculate the gradient, hessian matrix of a 
-! given function contained in its inner, that is fun34 in MAM models, using 
-! finite-difference approximation
+! given function contained in its inner, that is fun34 in CW-OSL fitting models, 
+! using finite-difference approximation
 !
 ! pars(npars)          :: input, real values, the parameters of the function
-! ED (nED)             :: input, real values, the log-scale OSL ED values 
-! error(nED)           :: input, real values, the OSL ED's absolute error
-! npars                :: input, integer, the size of ED data
-! nED                  :: input, integer, the dimension of the parameters 
+! xdat (ndat)          :: input, real values, the xdat values 
+! ydat (ndat)          :: input, real values, the ydat values
+! npars                :: input, integer, the length of tim ( or signal)
+! ndat                 :: input, integer, the dimension of the parameters 
 ! tol                  :: input, real value, tolerance value for diagnosing sigular matrix
 ! minAbspar            :: input, real value, the allowed minimum absolute parameter 
 ! hessian(npars,npars) :: output, real values, the hessian matrix
 ! gradient(npars)      :: output, real values, the gradient of the parameters
 ! value                :: output, real value, the correspond function value for the specified parameters 
-! errorflag(3)         :: output, integer values, error message :
-!                         1) if value can be calculated, errorflag(1)=0, otherwise 1;
-!                         2) if gradient can be calculated, errorflag(2)=0, otherwise 1; 
-!                         3) if hessian can be calculated, errorflag(3)=0, otherwise 1; 
-!                         4) if any error appears in dynamic array allocation, errorflag(4) will be 1, else 0.  
-!                            but if sigular matrix appears when attempt to call subroutine GJordan to approximate 
-!                            value, gradient and hessian, all values in errorflag will be 1
+! errorflag(5)         :: output, integer values, error message generated during the calling:
+!                         1) if subroutine GJordan is called sucessfully, errorflag(1)=0, otherwise 1;
+!                         2) if function value can be calculated, errorflag(2)=0, otherwise 1;
+!                         3) if gradient can be calculated, errorflag(3)=0, otherwise 1; 
+!                         4) if hessian can be calculated, errorflag(4)=0, otherwise 1; 
+!                         5) if no error appears in arrary allocation, errorflag(5)=0, otherwise 1.
+! model                :: input, integer, a model to be used for approximation:
+!                         1) y=I(1)*exp(-lamda(1)*x)+I(2)*exp(-lamda(2)*x)+...+I(k)*exp(-lamda(k)*x)
+!                         2) y=a*x+b
+!                         3) y=a*(1-exp(-b*x))+c
+!                         4) y=a*(1-exp(-b*x)+c*x+d
 !
-! Dependency:: subroutine GJordan, inter function fun34
+! Dependence:: subroutine GJordan, inter function fun34
 !
-! Author:: Peng Jun, 2013.01.27, revised in 2013.03.17, revised again in 2013.04.21, last revised in 2013.06.09
+! Author:: Peng Jun, 2013.05.21, revised in 2013.05.23
 !
 ! Reference:  Jose Pinheiro, Douglas Bates, Saikat DebRoy, Deepayan Sarkar and the
 !             R Development Core Team (2013). nlme: Linear and Nonlinear Mixed
 !             Effects Models. R package version 3.1-108.
-
-!
 !--------------------------------------------------------------------------------------------------
   implicit none
   integer(kind=4),intent(in)::npars                 
-  integer(kind=4),intent(in)::nED                    
-  integer(kind=4),intent(out)::errorflag(4)             
+  integer(kind=4),intent(in)::ndat 
+  integer(kind=4),intent(in)::model                   
+  integer(kind=4),intent(out)::errorflag(5)             
   real   (kind=8),intent(in)::pars(npars)            
-  real   (kind=8),intent(in)::ED(nED)                
-  real   (kind=8),intent(in)::Error(nED)            
+  real   (kind=8),intent(in)::xdat(ndat)                
+  real   (kind=8),intent(in)::ydat(ndat)            
   real   (kind=8),intent(in)::tol                   
   real   (kind=8),intent(in)::minAbsPar              
   real   (kind=8),intent(out)::gradient(npars)       
@@ -49,15 +52,15 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar,&
   integer(kind=4)::i,j,p
   integer(kind=4)::ncols
   integer(kind=4)::solerror
-  real   (kind=8)::incr(npars)
-  real   (kind=8)::diagpar(npars,npars)
-  real   (kind=8),allocatable::frac(:),cfrac(:)
-  real   (kind=8)::ffrac(1+2*npars)
-  real   (kind=8),allocatable::cols(:,:),ccols(:,:),shifted(:,:),transcols(:,:)
-  real   (kind=8)::pcols(npars,2*npars+1)
-  real   (kind=8),allocatable::xcols(:,:),cxcols(:,:)
-  real   (kind=8),allocatable::pxcols(:,:)
-  real   (kind=8),parameter::eps=2.013409D-05 ![.Machine$double.eps^0.3 in R]                 
+  real  (kind=8)::incr(npars)
+  real  (kind=8)::diagpar(npars,npars)
+  real  (kind=8),allocatable::frac(:),cfrac(:)
+  real  (kind=8)::ffrac(1+2*npars)
+  real  (kind=8),allocatable::cols(:,:),ccols(:,:),shifted(:,:),transcols(:,:)
+  real  (kind=8)::pcols(npars,2*npars+1)
+  real  (kind=8),allocatable::xcols(:,:),cxcols(:,:)
+  real  (kind=8),allocatable::pxcols(:,:)
+  real(kind=8),parameter::eps=6.055454e-06                  
   !
   ! Decide the incr values
   ! for each initial par in pars, check if it
@@ -97,22 +100,22 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar,&
   ! in a total of (npars-1) times looping
   ! add  (npars-i) columns to cols in each loop number
   ! hence a toal of npars*(npars-1)/2 columns for cols
-  allocate( cols(1:npars,1:npars*(npars-1)/2), stat=errorflag(4))
-  if( errorflag(4)/=0 ) return
+  allocate( cols(1:npars,1:npars*(npars-1)/2), stat=errorflag(5))
+  if(errorflag(5)/=0) return
   ! in a total of (npars-1) times looping
   ! add (npars-i) number to frac in each loop number
   ! hence a total of npars*(npars-1)/2 values for frac
-  allocate( frac(1:npars*(npars-1)/2), stat=errorflag(4))
-  if( errorflag(4)/=0 ) return
+  allocate( frac(1:npars*(npars-1)/2), stat=errorflag(5))
+  if(errorflag(5)/=0) return
   !
   ncols=0
   do i=1,npars-1
     ! in each loop(i), generate ccols and cfrac with 
     ! npars rows (npars-i) columns 
-    allocate( ccols(1:npars,1:npars-i), stat=errorflag(4))
-    if( errorflag(4)/=0 ) return
-    allocate( cfrac(1:npars-i), stat=errorflag(4))
-    if( errorflag(4)/=0 ) return
+    allocate( ccols(1:npars,1:npars-i), stat=errorflag(5))
+    if(errorflag(5)/=0) return
+    allocate( cfrac(1:npars-i), stat=errorflag(5))
+    if(errorflag(5)/=0) return
     ! fill ccols and cfrac in each loop
     do j=i+1,npars
       ccols(:,j-i)=diagpar(:,i)+diagpar(:,j)
@@ -132,28 +135,28 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar,&
   end do
   ! now add up pcols and cols togeteher to be ccols
   ! ccols has a total of ( 2*npars+1 + npars*(npars-1)/2 ) columns
-  allocate( ccols(1:npars,1:npars*(npars-1)/2+2*npars+1), stat=errorflag(4))
-  if( errorflag(4)/=0 ) return
+  allocate( ccols(1:npars,1:npars*(npars-1)/2+2*npars+1), stat=errorflag(5))
+  if(errorflag(5)/=0) return
   ccols(:,1:2*npars+1)=pcols
   ccols(:,2*npars+2:npars*(npars-1)/2+2*npars+1)=cols
   ! not need cols presently, so release it
   deallocate(cols)
   ! allocate cols again to store ccols, and release ccols
-  allocate(cols(1:npars,1:npars*(npars-1)/2+2*npars+1), stat=errorflag(4))
-  if( errorflag(4)/=0 ) return
+  allocate(cols(1:npars,1:npars*(npars-1)/2+2*npars+1), stat=errorflag(5))
+  if(errorflag(5)/=0) return
   cols=ccols
   deallocate(ccols)
   ! now add up ffrac and frac together to be cfrac,
   ! cfrac has a total of ( 2*npars+1 + npars*(npars-1)/2 ) values
-  allocate( cfrac(1:npars*(npars-1)/2+2*npars+1) ,stat=errorflag(4))
-  if( errorflag(4)/=0 ) return
+  allocate( cfrac(1:npars*(npars-1)/2+2*npars+1), stat=errorflag(5))
+  if(errorflag(5)/=0) return
   cfrac(1:2*npars+1)=ffrac
   cfrac(2*npars+2:npars*(npars-1)/2+2*npars+1)=frac
   ! not need frac so release it
   deallocate(frac)
   ! allocate frac again, store cfrac in it then release cfrac
-  allocate(frac(1:npars*(npars-1)/2+2*npars+1), stat=errorflag(4))
-  if( errorflag(4)/=0 ) return
+  allocate(frac(1:npars*(npars-1)/2+2*npars+1), stat=errorflag(5))
+  if(errorflag(5)/=0) return
   frac=cfrac
   deallocate(cfrac) 
   ! specify p to be the column number of cols
@@ -161,22 +164,22 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar,&
   p=npars*(npars-1)/2+2*npars+1
   ! now allocate shifted to be the same shape 
   ! with cols and store some values in it
-  allocate(shifted(1:npars,p), stat=errorflag(4))
-  if( errorflag(4)/=0 ) return
+  allocate(shifted(1:npars,p), stat=errorflag(5))
+  if(errorflag(5)/=0) return
   do i=1,p
     shifted(:,i)=pars+incr*cols(:,i)
   end do
   ! allocate transcols to store transposed cols
   ! transcols has p rows, npars columns
-  allocate( transcols(1:p,1:npars) ,stat=errorflag(4))
-  if( errorflag(4)/=0 ) return
+  allocate( transcols(1:p,1:npars), stat=errorflag(5))
+  if(errorflag(5)/=0) return
   transcols=transpose(cols)
   ! now cols will not be needed, release it
   deallocate(cols)
   ! allocate pxcols to store transcols 
   ! in differ style
-  allocate(pxcols(p,1+2*npars), stat=errorflag(4))
-  if( errorflag(4)/=0 ) return
+  allocate(pxcols(p,1+2*npars), stat=errorflag(5))
+  if(errorflag(5)/=0) return
   pxcols(:,1)=1.0D+00
   pxcols(:,2:npars+1)=transcols
   pxcols(:,npars+2:2*npars+1)=(transcols)**2
@@ -184,13 +187,13 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar,&
   ncols=0
   ! now allocate xcols with p rows and 
   ! npars*(npars-1)/2 columns
-  allocate( xcols(p,1:npars*(npars-1)/2), stat=errorflag(4))
-  if( errorflag(4)/=0 ) return
+  allocate( xcols(p,1:npars*(npars-1)/2), stat=errorflag(5))
+  if(errorflag(5)/=0) return
   ! 
   do i=1,npars-1
     ! in each loop, allocate cxcols 
-    allocate(cxcols(p,1:npars-i), stat=errorflag(4))
-    if( errorflag(4)/=0 ) return
+    allocate(cxcols(p,1:npars-i), stat=errorflag(5))
+    if(errorflag(5)/=0) return
     do j=i+1,npars
       cxcols(:,j-i)=transcols(:,i)*transcols(:,j)
     end do
@@ -201,24 +204,24 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar,&
     ncols=ncols+npars-i  
   end do
   ! now store pxcols and xcols together to cxcols
-  allocate( cxcols(p,1:1+2*npars+npars*(npars-1)/2), stat=errorflag(4))
-  if( errorflag(4)/=0 ) return
+  allocate( cxcols(p,1:1+2*npars+npars*(npars-1)/2), stat=errorflag(5))
+  if(errorflag(5)/=0) return
   cxcols(:,1:1+2*npars)=pxcols
   cxcols(:,2+2*npars:1+2*npars+npars*(npars-1)/2)=xcols
   ! release xcols and pxcols
   deallocate(xcols)
   deallocate(pxcols)
   ! allocate xcols again to store cxcols
-  allocate(xcols(p,1:1+2*npars+npars*(npars-1)/2), stat=errorflag(4))
-  if( errorflag(4)/=0 ) return
+  allocate(xcols(p,1:1+2*npars+npars*(npars-1)/2), stat=errorflag(5))
+  if(errorflag(5)/=0) return
   xcols=cxcols
   ! release cxcols
   deallocate(cxcols)
   ! allocate pxcols again and store some
   ! values to it then release shifted
   ! now pxcols has p rows and 1 column
-  allocate(pxcols(1:p,1), stat=errorflag(4))
-  if( errorflag(4)/=0 ) return
+  allocate(pxcols(1:p,1), stat=errorflag(5))
+  if(errorflag(5)/=0) return
   do i=1,p
     pxcols(i,:)=fun34(shifted(:,i))
   end do
@@ -226,7 +229,7 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar,&
   ! solve xcols %*% X = pxcols
   ! store solved X values in pxcols
   call GJordan(xcols,pxcols,p,1,solerror,tol)
-  if(solerror==1)  errorflag=1
+  if(solerror==1)  errorflag(1)=1
   ! scale pxcols with frac and release frac,
   ! release xcols
   pxcols(:,1)=pxcols(:,1)/frac
@@ -257,66 +260,43 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar,&
   !
   ! check Inf and NaN for value
   if( value .ne. value .or. &
-      value+1.0D+00==value  )            errorflag(1)=1
+      value+1.0D+00==value  )            errorflag(2)=1
   ! check Inf and NaN for gradient
   if( any(gradient .ne. gradient) .or. &
-      any(gradient+1.0D+00==gradient) )  errorflag(2)=1
+      any(gradient+1.0D+00==gradient) )  errorflag(3)=1
   ! check Inf and NaN for hessian
   if( any(hessian .ne. hessian) .or. &
-      any(hessian+1.0D+00==hessian) )    errorflag(3)=1
+      any(hessian+1.0D+00==hessian) )    errorflag(4)=1
   ! if no error appears, return 
   return
   !
   contains
-!----------------------
-  function fun34(x)
-  !------------------------------------------------------------------------------------------------------------
-  ! fun34 is a inner function contained in subroutine hessian its used for calculating minus 
-  ! logged maximum likelihood value of minimum age model of three or four parameters 
+    function fun34(x)
+      implicit none
+      real(kind=8)::fun34
+      real(kind=8),dimension(npars)::x
+      real(kind=8),dimension(ndat)::fvec
+      real(kind=8),dimension(4)::cx
+      integer(kind=4)::k
+      !
+      cx=0.0D+00
+      if(model==1) then
+        fvec=0.0D+00
+        do k=1,npars/2
+          fvec=fvec+x(k)*dexp(-x(k+npars/2)*xdat)   
+        end do
+      else 
+        cx(1:npars)=x
+        if(model==2) then
+          fvec=cx(1)*xdat+cx(2)
+        else if(model==3) then
+          fvec=cx(1)*(1.0D+00-dexp(-cx(2)*xdat))+cx(3)
+        else if(model==4) then
+          fvec=cx(1)*(1.0D+00-dexp(-cx(2)*xdat))+cx(3)*xdat+cx(4)
+        end if
+      end if 
+      fun34=sqrt( sum( (fvec-ydat)**2 ) )
+      return
+    end function fun34
   !
-  ! x(npars), input     :: real values, the parameters used for calculating
-  ! fun34,   output     :: real value, the value for the specified function
-  !
-  !  Author :: Peng Jun, 2013.03.16
-  !
-  ! Reference:: Galbraith, R.F., Roberts, R.G., Laslett, G.M., Yoshida, H. & Olley, J.M., 1999. Optical dating of
-  !             single grains of quartz from Jinmium rock shelter, northern Australia. Part I: experimental design
-  !             and statistical models. Archaeometry, 41, pp. 339-364.
-  !
-  ! Dependence:: subroutine pnorm, function alnorm, also the ED data (log-scale) provided in subroutine hessian
-  !
-  !--------------------------------------------------------------------------------------------------------------
-    implicit none
-    real(kind=8)::x(npars)
-    real(kind=8)::fun34
-    real(kind=8)::pnorm1(nED)
-    real(kind=8)::alnorm
-    real(kind=8),parameter::pi=3.141592653589793238462643383279502884197D+00
-    logical,parameter::upper=.false.   
-    !
-    if (npars==3)    then
-      !
-      pnorm1=(x(2)-(x(2)/x(3)**2+ED/Error**2)/(1.0D+00/x(3)**2+1.0D+00/Error**2))*sqrt(1.0D+00/Error**2+1.0D+00/x(3)**2)
-      !
-      call pnorm(pnorm1,nED,upper)
-      !
-      fun34=-sum(log(x(1)/sqrt(2.0D+00*pi*Error**2)*exp(-(ED-x(2))**2/(2.0D+00*Error**2))+&
-	        (1.0D+00-x(1))/sqrt(2.0D+00*pi*(Error**2+x(3)**2))*exp(-(ED-x(2))**2/(2.0D+00*(Error**2+x(3)**2)))*&
-	        (1.0D+00-pnorm1)/(0.5D+00)))  
-    elseif(npars==4)  then
-      !
-      pnorm1=(x(2)-(x(3)/x(4)**2+ED/Error**2)/(1.0D+00/x(4)**2+1.0D+00/Error**2))*sqrt(1.0D+00/Error**2+1.0D+00/x(4)**2)
-      !
-      call pnorm(pnorm1,nED,upper)	 
-      !
-      fun34=-sum(log(x(1)/sqrt(2.0D+00*pi*Error**2)*exp(-(ED-x(2))**2/(2.0D+00*Error**2))+&
-	        (1.0D+00-x(1))/sqrt(2.0D+00*pi*(Error**2+x(4)**2))*exp(-(ED-x(3))**2/(2.0D+00*(Error**2+x(4)**2)))*&
-	        (1.0D+00-pnorm1)/(1.0D+00-alnorm((x(2)-x(3))/x(4),upper))))   
-      ! 
-    end if
-    !
-    return
-    !
-  end function fun34   
-!---------------------------
-end subroutine fdhessian
+end subroutine lmhess

@@ -23,4 +23,4 @@ subroutine diag(a,n,b)
      b(i)=a(i,i)
    end do
    return
- end subroutine diag
+end subroutine diag

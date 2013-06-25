@@ -16,7 +16,7 @@ CW OSL shine down signal data measured over 40 s in 250 equal width channels
   }
 }
 \source{
-OSL Signal data of a sample from Tengger Desert in northern china
+OSL signal data of a sample from Tengger Desert in northern china
 }
 \references{
 Unpublished OSL data

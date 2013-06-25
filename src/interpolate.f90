@@ -1,4 +1,4 @@
-subroutine interpolate(Dose,ltx,pars,npars,lowb,upb,typ,value)
+subroutine interpolate(Dose,ltx,pars,npars,lowb,upb,value)
 !-------------------------------------------------------------------------------------------------------------------
 ! interpolate is a subroutine used for interpolating a Dose value from a Dose-Response Curve
 !
@@ -9,14 +9,11 @@ subroutine interpolate(Dose,ltx,pars,npars,lowb,upb,typ,value)
 ! ltx,          input:: real value, the standardlized signal value from which a Dose is to be estimated
 ! lowb,         input:: rea lvalue, low boundary of a interval from which the interpolation to take place
 ! upb,          input:: real value, up boundary of a interval from which the interpolation to take place
-! typ,          input:: logical, type of interpolation:
-!                       1) if typ=TRUE, the interpolation will try to estimate a Dose that correspond to ltx
-!                       2) if typ=FALSE, the interpolation will try to estimate the highese ltx value of a Dose-Response curve
 ! 
-! Author:: Peng Jun, 2013.05.29
+! Author:: Peng Jun, 2013.06.22
 !
-! Dependence:: inner function fmin; inner function f; inner function g
-!----------------------------------------------------------------------------------------------------------------------
+! Dependence:: function fmin
+!--------------------------------------------------------------------------------------------------------------------
   implicit none
   integer(kind=4),intent(in)::npars
   real   (kind=8),intent(out)::Dose
@@ -24,223 +21,30 @@ subroutine interpolate(Dose,ltx,pars,npars,lowb,upb,typ,value)
   real   (kind=8),intent(in)::ltx
   real   (kind=8),intent(in)::lowb,upb
   real   (kind=8),dimension(npars),intent(in)::pars
-  logical,intent(in)::typ
-  ! local varialbes
-  real   (kind=8),parameter::gtol=1.490116e-08   ! .Machine$double.eps^0.5 in R
-  real   (kind=8),dimension(4)::cpars
   !
-  ! store pars to cpars
+  ! local variables
+  real   (kind=8),parameter::gtol=1.490116e-08  ! .Machine$double.eps^0.5 in R
+  real   (kind=8),dimension(4)::cpars
+  real   (kind=8)::fmin
+  !
   cpars=0.0D+00
   cpars(1:npars)=pars
+  !
   ! initialize Dose and value
-  Dose=0.0D+00
+  Dose=0.0D+00 
   value=0.0D+00
-  ! estimate a Dose that correspond to ltx, need not to return value
-  if(typ) then
-    ! linear model
-    if(npars==2)  then
-      Dose=( ltx-pars(2) )/pars(1)
-    else
-      ! exp or linear+exp model
-      Dose=fmin(lowb,upb,f,gtol)
-    end if
-  else 
-    ! estimate the highese ltx value, need not to return Dose
-    if(npars==3 .or. npars==4) then
-      ! exp or linear+exp model
-      Dose=fmin(lowb,upb,g,gtol)
-      value=g(Dose)
-    else 
-      ! linear model 
-      value=-1000D+00
-    end if
+  ! 
+  ! calculate Dose
+  Dose=fmin(lowb,upb,gtol,ltx,cpars,npars)
+  !
+  ! calculate value
+  if(npars==2) then
+    value=(cpars(1)*Dose+cpars(2)-ltx)**2
+  else if(npars==3) then
+    value=(cpars(1)*(1.0D+00-dexp(-cpars(2)*Dose))+cpars(3)-ltx)**2
+  else if(npars==4) then
+    value=(cpars(1)*(1.0D+00-dexp(-cpars(2)*Dose))+cpars(3)*Dose+cpars(4)-ltx)**2
   end if
   !
   return
-  contains
-!*************************************************************************
-  function f(x)
-    implicit none
-    real(kind=8)::f,x
-    !
-    if(npars==3)  then 
-      f=(cpars(1)*(1.0D+00-dexp(-cpars(2)*x))+cpars(3)-ltx)**2
-    else if(npars==4) then
-      f=(cpars(1)*(1.0D+00-dexp(-cpars(2)*x))+cpars(3)*x+cpars(4)-ltx)**2
-    end if
-    return
-  end function f
-!*************************************************************************
-  function g(x)
-    implicit none
-    real(kind=8)::g,x
-    !
-    if(npars==3)  then 
-      g=-(cpars(1)*(1.0D+00-dexp(-cpars(2)*x))+cpars(3))
-    else if(npars==4) then
-      g=-(cpars(1)*(1.0D+00-dexp(-cpars(2)*x))+cpars(3)*x+cpars(4))
-    end if
-    return
-  end function g
-!**************************************************************************
-      double precision function fmin(ax,bx,f,tol)
-      double precision ax,bx,f,tol
-!
-!  an approximation  x  to the point where  f  attains a minimum  on
-!  the interval  (ax,bx)  is determined.
-!
-!
-!  input..
-!
-!  ax    left endpoint of initial interval
-!  bx    right endpoint of initial interval
-!  f     function subprogram which evaluates  f(x)  for any  x
-!        in the interval  (ax,bx)
-!  tol   desired length of the interval of uncertainty of the final
-!        result ( .ge. 0.0d0)
-!
-!
-!  output..
-!
-!  fmin  abcissa approximating the point where  f  attains a minimum
-!
-!
-!      the method used is a combination of  golden  section  search  and
-!  successive parabolic interpolation.  convergence is never much slower
-!  than  that  for  a  fibonacci search.  if  f  has a continuous second
-!  derivative which is positive at the minimum (which is not  at  ax  or
-!  bx),  then  convergence  is  superlinear, and usually of the order of
-!  about  1.324....
-!      the function  f  is never evaluated at two points closer together
-!  than  eps*abs(fmin) + (tol/3), where eps is  approximately the square
-!  root  of  the  relative  machine  precision.   if   f   is a unimodal
-!  function and the computed values of   f   are  always  unimodal  when
-!  separated by at least  eps*abs(x) + (tol/3), then  fmin  approximates
-!  the abcissa of the global minimum of  f  on the interval  ax,bx  with
-!  an error less than  3*eps*abs(fmin) + tol.  if   f   is not unimodal,
-!  then fmin may approximate a local, but perhaps non-global, minimum to
-!  the same accuracy.
-!      this function subprogram is a slightly modified  version  of  the
-!  algol  60 procedure  localmin  given in richard brent, algorithms for
-!  minimization without derivatives, prentice - hall, inc. (1973).
-!
-!
-      double precision  a,b,c,d,e,eps,xm,p,q,r,tol1,tol2,u,v,w
-      double precision  fu,fv,fw,fx,x
-      double precision  dabs,dsqrt,dsign
-!
-!  c is the squared inverse of the golden ratio
-!
-      c = 0.5d0*(3. - dsqrt(5.0d0))
-!
-!  eps is approximately the square root of the relative machine
-!  precision.
-!
-      eps = 1.0d00
-   10 eps = eps/2.0d00
-      tol1 = 1.0d0 + eps
-      if (tol1 .gt. 1.0d00) go to 10
-      eps = dsqrt(eps)
-!
-!  initialization
-!
-      a = ax
-      b = bx
-      v = a + c*(b - a)
-      w = v
-      x = v
-      e = 0.0d0
-      fx = f(x)
-      fv = fx
-      fw = fx
-!
-!  main loop starts here
-!
-   20 xm = 0.5d0*(a + b)
-      tol1 = eps*dabs(x) + tol/3.0d0
-      tol2 = 2.0d0*tol1
-!
-!  check stopping criterion
-!
-      if (dabs(x - xm) .le. (tol2 - 0.5d0*(b - a))) go to 90
-!
-! is golden-section necessary
-!
-      if (dabs(e) .le. tol1) go to 40
-!
-!  fit parabola
-!
-      r = (x - w)*(fx - fv)
-      q = (x - v)*(fx - fw)
-      p = (x - v)*q - (x - w)*r
-      q = 2.0d00*(q - r)
-      if (q .gt. 0.0d0) p = -p
-      q =  dabs(q)
-      r = e
-      e = d
-!
-!  is parabola acceptable
-!
-   30 if (dabs(p) .ge. dabs(0.5d0*q*r)) go to 40
-      if (p .le. q*(a - x)) go to 40
-      if (p .ge. q*(b - x)) go to 40
-!
-!  a parabolic interpolation step
-!
-      d = p/q
-      u = x + d
-!
-!  f must not be evaluated too close to ax or bx
-!
-      if ((u - a) .lt. tol2) d = dsign(tol1, xm - x)
-      if ((b - u) .lt. tol2) d = dsign(tol1, xm - x)
-      go to 50
-!
-!  a golden-section step
-!
-   40 if (x .ge. xm) e = a - x
-      if (x .lt. xm) e = b - x
-      d = c*e
-!
-!  f must not be evaluated too close to x
-!
-   50 if (dabs(d) .ge. tol1) u = x + d
-      if (dabs(d) .lt. tol1) u = x + dsign(tol1, d)
-      fu = f(u)
-!
-!  update  a, b, v, w, and x
-!
-      if (fu .gt. fx) go to 60
-      if (u .ge. x) a = x
-      if (u .lt. x) b = x
-      v = w
-      fv = fw
-      w = x
-      fw = fx
-      x = u
-      fx = fu
-      go to 20
-   60 if (u .lt. x) a = u
-      if (u .ge. x) b = u
-      if (fu .le. fw) go to 70
-      if (w .eq. x) go to 70
-      if (fu .le. fv) go to 80
-      if (v .eq. x) go to 80
-      if (v .eq. w) go to 80
-      go to 20
-   70 v = w
-      fv = fw
-      w = u
-      fw = fu
-      go to 20
-   80 v = u
-      fv = fu
-      go to 20
-!
-!  end of main loop
-!
-   90 fmin = x
-      return
-      end
-!*************************************************************
 end subroutine interpolate

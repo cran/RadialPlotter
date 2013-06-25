@@ -22,14 +22,14 @@ decomp(SigData,
 \arguments{
   \item{SigData}{\link{data.frame}(\bold{required}): two columns, time (t1,t2,ect) and correspond signal (s1,s2,ect) to be decomposed
 }
-  \item{ncomp}{\link{numeric}(with default): the number of components to be decomposed, which must be in range 1 to 7
+  \item{ncomp}{\link{numeric}(with default): the number of components to be decomposed, which must be in a range of 1 to 7
 }
   \item{LEDpower}{\link{numeric}(with default): LED power (mW/cm2) used for intensity ramping during the measurement
 
 }
   \item{LEDwavelength}{\link{numeric}(with default): LED wavelength (nm) used for stimulation during the measurement
 }
-  \item{plot}{\link{logical}(with default):whether plot the results or not
+  \item{plot}{\link{logical}(with default): whether plot the results or not
 }
   \item{xyLim}{\link{vector}(with default): up limitation of x and y axis used for plotting
 }
@@ -42,7 +42,7 @@ decomp(SigData,
 This function decomposes OSL decay curve to a specified number of components using a combination of differential evolution and
 Levenberg-Marquardt algorithm. Fitting model: \cr
 I(t)=a1*exp(-b1*t)+a2*exp(-b2*t)+...+ak*exp(-bk*t) \cr\cr
-Initial parameters are estimated using the differential evolution method suggested by Bluszcz A and Adamiec G (2006), then Levenberg-Marquardt algorithm (minpack: original FORTRAN 77 version by Jorge More, Burton Garbow, Kenneth Hillstrom. FORTRAN 90 version by John Burkardt) will be performed to obtain a final optimization. In some radical cases, differential evolution will fail in parameter initializing, then a serise of simple trails will be carryed out using Levenberg-Marquardt algorithm. The arguments (control.args) in differential evolution are:\cr\cr
+Initial parameters are estimated using the differential evolution method suggested by Bluszcz A and Adamiec G (2006), then Levenberg-Marquardt algorithm (minpack: original FORTRAN 77 version by Jorge More, Burton Garbow, Kenneth Hillstrom. FORTRAN 90 version by John Burkardt) will be performed to obtain a final optimization. In some radical cases, differential evolution will fail in parameter initializing, then a serise of simple trails will be carryed out using Levenberg-Marquardt algorithm. The arguments (control.args) used for differential evolution are:\cr\cr
 factor: used for control the number of parents (NP), np=factor*ncomp, 5 to 10 times the number of components is preferable, default factor=10; \cr\cr
 f: weighting factor, ranging from 0 to 1.2, default f=0.5; \cr\cr
 cr: crossover constant, ranging from 0 to 1, default cr=0.99; \cr\cr
@@ -80,17 +80,14 @@ I thank Andrzej Bluszcz, who helps me a lot during the writting of this function
 
 \examples{
  #
- # load package 'RadialPlotter'
- library(RadialPlotter)
- #
  # loading signal data
  data(CW.Signal.data)
  #
- # decompose OSL signal to 4 components
- decomp(CW.Signal.data,ncomp=4)
+ # decompose OSL signal to 3 components
+ decomp(CW.Signal.data,ncomp=3)
  #
- # reset factor, maxiter and decompose signal to 6 components
- decomp(CW.Signal.data,ncomp=6,control.args=list(factor=9,maxiter=500))
+ # reset factor, maxiter and decompose signal to 5 components
+ decomp(CW.Signal.data,ncomp=5,control.args=list(factor=9,maxiter=500))
 }
 
 \keyword{package RadialPlotter}

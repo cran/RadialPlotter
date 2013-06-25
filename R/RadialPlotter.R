@@ -1,6 +1,16 @@
 ###
-# Wrapped function RadialPlotter calls 
-# function RadialPlotter.default
+############################################### FUNCTION RadialPlotter ####################################################
+#### Wrapped function RadialPlotter calls 
+#### function RadialPlotter.default
+###
+### Author: Peng Jun, 2013.04.20
+###
+### References: Galbraith, R.F., 1988. Graphical Display of Estimates Having Differing Standard 
+###             Errors. Technometrics, 30 (3), pp. 271-281.
+###
+###             Galbraith, R.F., Roberts, R.G., 2012. Statistical aspects of equivalent dose and error calculation and  
+###             display in OSL dating: An overview and some recommendations. Quaternary Geochronology, 11, pp. 1-27.
+###
 ################################################
 RadialPlotter<-
 function(EDdata,ncomp=0,addsigma=0,
@@ -9,17 +19,16 @@ function(EDdata,ncomp=0,addsigma=0,
          zscale=NULL,samplename=NULL)  {
   UseMethod('RadialPlotter')
 }
-#
-############################################### RadialPlotter.default ####################################################
-#
+###
 # set default method for function RadialPlotter
+########################################
 RadialPlotter.default <-
 function(EDdata,ncomp=0,addsigma=0,
          maxiter=500,maxcomp=9,
          eps=.Machine$double.eps^0.5,plot=TRUE,
          zscale=NULL,samplename=NULL)  {
-  if(!is.data.frame(EDdata))  stop('EDdata must be type of data.frame!')
-  if(any(EDdata[,1]<=0))      stop('Equivalent must be larger than 0!')
+  if(!is.data.frame(EDdata))  stop('EDdata must be of type data.frame!')
+  if(any(EDdata[,1]<=0))      stop('Equivalent Dose must be larger than 0!')
   if(!ncomp%in%(-2:maxcomp))  stop('ncomp must be an integer ranging from -2 to maxcomp!')
   if(ncomp==0&&maxcomp<=1)    stop("maxcomp must non't be smaller than 2 if ncomp is 0!") 
   if(addsigma<0)  stop('addsigma must not be smaller than 0!')
@@ -28,13 +37,13 @@ function(EDdata,ncomp=0,addsigma=0,
   if(maxcomp>n)   stop('maxcomp must not exceed the length of ED!')
   ed<-EDdata[,1]
   error<-EDdata[,2]
-  #
-  # function for radial plot drawing,
-  # the code is revised from Rex Galbraith 
+  ###
+  ### function for radial plot drawing,
+  ### the code is revised from Rex Galbraith 
   RadialPlot<-function(Data,Pars,zscale,samplename)  {
     z.i<-log(Data[,1])
     se.i<-Data[,2]/Data[,1]
-    # if Pars=NULL, lines will not be plotted out
+    ### if Pars=NULL, lines will not be plotted out
     if(!is.null(Pars))  {
       Pars<-log(Pars)
     }
@@ -75,7 +84,7 @@ function(EDdata,ncomp=0,addsigma=0,
        xaxt='n',yaxt='n',main=samplename,bty='n',typ='n',xaxs='i',yaxs='i')      
     lenpar<-length(Pars) 
     maxx<-which.max(circ.x)
-    # if Pars!=NULL, now starting drawing lines out
+    ### if Pars!=NULL, now starting drawing lines out
     if(!is.null(Pars))  {
       for(i in 1:lenpar)  {
         if(Pars[i]-z.0>=0)  {
@@ -103,19 +112,19 @@ function(EDdata,ncomp=0,addsigma=0,
     axis(side=1,at=reticks.values[-1], lwd=2,labels=reticks.labels[-1],line=4,cex.axis=1,tck=0.02,padj=-4)
     mtext(side=1,line=1.5,'Relative Error (%)',cex=1)
     axis(side=2,at=c(-2,-1,0,1,2),lwd=2,labels=c('-2','','0','','2'),cex.axis=1)
-  } # end function RadialPlot
-  #
+  } ### end function RadialPlot
+  ###
   tol<-.Machine$double.eps^0.3    
   errorflag<-0
   maxlik<-BIC<-0
-  #
-  # for CAM and FMM analysis
+  ###
+  ### for CAM and FMM analysis
   if(ncomp%in%(0:maxcomp))  {
     if (ncomp==0)  {
       goodcomp<-0
       BILI<-matrix(0,nrow=maxcomp-1,ncol=2L)
-      # call Fortran subroutine 'FineComp' to pick out the appropriate 
-      # number of component automatically
+      ### call Fortran subroutine 'FineComp' to pick out the appropriate 
+      ### number of component automatically
       Results<-.Fortran('FineComp',as.double(ed),as.double(error),as.integer(n),
                 goodcomp=as.integer(goodcomp),as.double(addsigma),as.integer(maxiter),       
                 as.double(eps),as.integer(maxcomp),BILI=as.double(BILI),pacakge='RadialPlotter')
@@ -127,22 +136,22 @@ function(EDdata,ncomp=0,addsigma=0,
       loopcomp<-1
     }  
     spars<-pars<-matrix(0,nrow=2L,ncol=ncomp)
-    # call Fortran subroutine 'FineED1' to calculate parameters in 
-    # central age model or finite mixture age model
+    ### call Fortran subroutine 'FineED1' to calculate parameters in 
+    ### central age model or finite mixture age model
     Results<-.Fortran('FineED1',as.double(ed),as.double(error),as.integer(n),
                       as.integer(ncomp),as.double(addsigma),
                       pars=as.double(pars),spars=as.double(spars),maxlik=as.double(maxlik),
                       BIC=as.double(BIC),as.integer(maxiter),as.double(eps),
                       as.double(tol),errorflag=as.integer(errorflag),pacakge='RadialPlotter')  
     ParsAndErrors<-cbind(matrix(Results$pars,byrow=TRUE,ncol=2),matrix(Results$spars,byrow=TRUE,ncol=2))
-    if(ncomp==1)  { # for CAM analysis
+    if(ncomp==1)  { ### for CAM analysis
       ParsAndErrors<-matrix(ParsAndErrors[,c(1,3,2,4)])
       rownames(ParsAndErrors)<-c('Sigma','sSigma','ED','sED')
       colnames(ParsAndErrors)<-'CAM'
       if(plot)  {
         RadialPlot(EDdata,ParsAndErrors[3],zscale,samplename)
       }
-    }  else {      # for FMM analysis
+    }  else {      ### for FMM analysis
       ParsAndErrors<-ParsAndErrors[,c(1,3,2,4)][order(ParsAndErrors[,2]),]
       if(plot)  {
         RadialPlot(EDdata,ParsAndErrors[,3],zscale,samplename)
@@ -151,9 +160,9 @@ function(EDdata,ncomp=0,addsigma=0,
       rownames(ParsAndErrors) <- paste(rep("comp", ncomp), c(1:ncomp), sep = "") 
     } 
   }  else  { 
-    # for MAM analysis 
+    ### for MAM analysis 
     pars<-spars<-vector(length=2-ncomp)
-    # call Fortran subroutine 'MAM' to fit the minimum age models
+    ### call Fortran subroutine 'MAM' to fit the minimum age models
     Results<-.Fortran('MAM',as.double(ed),as.double(error),as.integer(n),pars=as.double(pars),
                      spars=as.double(spars), maxlik=as.double(maxlik), BIC=as.double(BIC), 
                      as.integer(2-ncomp),as.double(addsigma), as.integer(maxiter),
@@ -173,17 +182,17 @@ function(EDdata,ncomp=0,addsigma=0,
       }
     }
   }
-  # at this point the age model analysis have been terminated
-  # now calculate the commom age model based equivalent dose
+  ### at this point the age model analysis have been terminated
+  ### now calculate the commom age model based equivalent dose
   z.i<-log(ed)
   se.i<-sqrt( (error/ed)^2 + addsigma^2 )
   commonED<-sum(z.i/se.i^2)/sum(1/se.i^2)
   scommonED <- 1/sqrt(sum(1/se.i^2))
-  # the returned list
+  ### the returned list
   out<-list(errorflag=Results$errorflag,commonED=exp(commonED)*c(1,scommonED),
             pars=ParsAndErrors,BIC=Results$BIC,maxlik=Results$maxlik)
   invisible(out)
-  # now output the result to the terminal screen
+  ### now output the result to the terminal screen
   cat('\n')
   cat('================Results for RadialPlotter================','\n\n')
   cat('Error message:',Results$errorflag,'\n\n')
@@ -219,286 +228,15 @@ function(EDdata,ncomp=0,addsigma=0,
     }
   }
   cat('=========================The End=========================','\n\n')
-  }  # end function RadialPlotter.default
-  #
-  #
-################################################### End FUNCTION RadialPlotter #########################################################
+}  # end function RadialPlotter.default
 ###
-######
-### Author: Peng Jun, 2013.05.28
-###
-### References: Roberts,H.M. and Duller,G.A.T., 2004. Standardised growth curves for optical dating of sediment
-###             using multiple-grain aliquots. Radiation Measurements 38, pp. 241-252.
-###
-###             Duller, G.A.T., 2007. Assessing the error on equivalent dose estimates derived from single aliquot
-###             regenerative dose measurements. Ancient TL 25, pp. 15-24.
-###
-################################################### FUNCTION SGCED ######################################################## 
-SGCED<-function(CurveData,
-                Ltx,
-                model='exp',
-                iniPars=NULL,
-                ErrorMethod='mc',
-                MCiter=1e4,
-                plot=TRUE,
-                dashline=TRUE)   {
-   UseMethod('SGCED')
-} # end function SGCED
-###
-###########################################
-###
-### default method for function SGCED
-SGCED.default<-function(CurveData,
-                        Ltx,
-                        model='exp',
-                        iniPars=NULL,
-                        ErrorMethod='mc',
-                        MCiter=1e4,
-                        plot=TRUE,
-                        dashline=TRUE)        {
-  ###
-  ### argument checking for function SGCED
-  stopifnot(nrow(CurveData)>=2,
-            !is.null(ncol(CurveData)),
-            ncol(CurveData)==2,
-            all(CurveData>=0),
-            all(Ltx>0),
-            MCiter>=1e2,
-            MCiter<=1e5,
-            is.numeric(iniPars) || is.null(iniPars),
-            model%in%c('line','exp','line+exp'),
-            ErrorMethod%in%c('sp','mc'),
-            is.logical(plot),
-            is.logical(dashline)
-            )
-  ###
-  ### 
-  if(is.null(iniPars)) {
-    # initilize parameters if initial 
-    # parameters have not been provided
-    if(model=='line') {
-      iniPars<-c(1,1)
-    } else if(model=='exp') {
-      iniPars<-c(5.0,0.05,0.05)
-    } else {
-      iniPars<-c(5.0,0.05,0.05,0.05)
-    } # end if
-  } else {
-    # check if iniPars have been provided appropriately
-    if(model=='line' && length(iniPars)!=2) {
-      stop('Linear Model Needs Two Initial Parameters')
-    } # end if
-    if(model=='exp' && length(iniPars)!=3) {
-      stop('Exponential Model Needs Three Initial Parameters')
-    } # end if
-    if(model=='line+exp' && length(iniPars)!=4) {
-      stop('Linear+Exponential Model Needs Four Initial Parameters')
-    } # end if
-  } # end if
-  ###
-  ###
-  # check if data is enough for model fitting
-  ndose<-nrow(CurveData)                # ndose
-  if(model=='line' && ndose<2) {
-    stop('Fitting a Linear Model Meeds at Least Two Paired Observations')
-  } # end if
-  if(model=='exp' && ndose<3) {
-     stop('Fitting a Exponential Model Needs at Least Three Paired Observations')
-  } # end if
-  if(model=='line+exp' && ndose<4) {
-    stop('Fitting a Linear+Exponential Model Needs at Least Four Paired Observations')
-  } # end if
-  ###
-  ### ****************************************************************************
-  ### specify parameters that will be used 
-  ### in Fortran subroutine 'sgc.f90'
-  dose<-CurveData[,1]                    # dose
-  ltx<-CurveData[,2]                     # ltx
-  ###
-  ### reshape inltx
-  if(is.null(ncol(Ltx))) {
-    inltx<-cbind(Ltx,0)
-  } else if(ncol(Ltx)==2) {              # inltx
-    inltx<-cbind(Ltx[,1],Ltx[,2])
-  } else {
-    stop('Incorrect Format of Ltx')
-  } # end if
-  nout<-nrow(inltx)                      # nout
-  outDose<-matrix(0.0,nrow=nout,ncol=2)  # outDose                  
-  pars<-iniPars                          # pars
-  predtval<-vector(length=ndose)         # predtval
-  npars<-length(iniPars)                 # npars
-  parserrors<-vector(length=npars)       # parserrors 
-  value<--99.0                           # value
-  errorflag<-vector(length=2)            # errorflag
-  ###
-  ### set method
-  if(ErrorMethod=='sp')  {
-    method<-1
-  } else {                               # method
-    method<-2
-  } # end if
-  ### ****************************************************************************
-  ###
-  ### calling Fortran subroutine 'sgc.f90'
-  res<-.Fortran('sgc',as.double(dose),as.double(ltx),as.integer(ndose),as.double(inltx),
-                      outDose=as.double(outDose),as.integer(nout),pars=as.double(pars),
-                      predtval=as.double(predtval),parserrors=as.double(parserrors),
-                      as.integer(npars),value=as.double(value),errorflag=as.integer(errorflag),
-                      as.integer(method),as.integer(MCiter),package='RadialPlotter'
-               )
-  ###
-  ### redefine LMpars for output
-  LMpars<-cbind(res$pars,res$parserrors)
-  if(res$errorflag[2]!=0) {
-    LMpars[,2]<-NA
-  } # end if
-  colnames(LMpars)<-c('Estimate','Std.Error')
-  rowname<-c('a','b','c','d')
-  rownames(LMpars)<-rowname[1:npars]
-  ###
-  ### redefine fit.value for output
-  fit.value<-cbind(CurveData,res$predtval)
-  colnames(fit.value)<-c('ReDose','Lx/Tx','Fit.Lx/Tx')
-  rownames(fit.value)<-paste('ReDose.',1:ndose,sep='')
-  ###
-  ### redefine Dose for output
-  Dose<-matrix(res$outDose,ncol=2)
-  if( is.null(ncol(Ltx))  ) {
-    Dose[,2]<-NA
-  } # end if
-  colnames(Dose)<-c('ED','Std.ED')
-  rownames(Dose)<-paste('ED',1:nout,sep='')
-  ###
-  ###
-  ### define error message for output
-  error<-vector(length=4)
-  ### 1) check error message in Levenberg-Marquadt fitting
-  if(res$errorflag[1]==123) {
-    error[1]<-'LM_Ok'
-  } else {
-    error[1]<-'LM_Fail'
-  } # end if
-  ### 2) check if characteristic parameters' standard errors can be estimated
-  if(res$errorflag[2]==0)  {
-    error[2]<-'LM.Std_Ok'
-  } else {
-    error[2]<-'LM.Std_Fail'
-  } # end if 
-  ### 3) check if Dose can be calculated
-  if( any(!is.finite(Dose[,1]) ) || 
-      any( abs(na.omit(Dose[,1])+99.0)<=.Machine$double.eps^0.1 )  ) {
-    error[3]<-'ED_Fail'
-  } else {
-    error[3]<-'ED_Ok'
-  } # end if
-  ## 4) check if Doses' standard errors can be estimated
-  if( any(!is.finite(Dose[,2]))  )  {
-    error[4]<-'ED.Std_Fail'
-  } else {
-    error[4]<-'ED.Std_Ok'
-  } # end if
-  ###
-  ### remove NA, Inf from inltx and Dose
-  Findex<-which(is.finite(Dose[,1]) )              
-  inltx<-inltx[Findex,,drop=FALSE]
-  Dose<-Dose[Findex,,drop=FALSE]
-  ### remove -99.0 from inltx and Dose
-  Findex<-which( abs(Dose[,1]+99.0)>.Machine$double.eps^0.1 )
-  inltx<-inltx[Findex,,drop=FALSE]
-  Dose<-Dose[Findex,,drop=FALSE]
-  ### set those minus standard errors of Dose to be NA
-  NAS<-which(Dose[,2]<0)
-  Dose[NAS,2]<-NA
-  ### check if any number exist in Dose 
-  if(nrow(Dose)<1) {
-    Dose<-NULL
-  } # end if
-  ###
-  ### diagnose if the fitting is successful
-  if(error[1]=='LM_Fail' ||
-     error[2]=='LM.Std_Fail' ) {
-    cat('Warning: Bad Estimation: Inappropriate Fitting Model or Improper Initial Guess Values!','\n\n')
-  } # end if
-  ###
-  ###
-  ### check how many ED values can not be calculated
-  if(error[3]=='ED_Fail') {
-    cat(paste('Warning: Leaving',ifelse(is.null(Dose),'all',nout-nrow(Dose)),
-              'Equivalent Dose Values Uncalculated!',sep=' '),'\n\n')
-  } # end if
-  ### prepare results for output
-  output<-list('errormessage'=as.matrix(error),
-               'LMpars'=LMpars,
-               'residual'=res$value,
-               'fit.value'=fit.value,
-               'Dose'=Dose )
-  ###
-  ### plot or not
-  if(plot)  {
-    ### perform the plot only if Dose data is available
-    if(!is.null(Dose)) {
-      ###
-      ### plot paired observations
-      Xlim<-max(CurveData[,1],Dose[,1])
-      Ylim<-max(CurveData[,2],inltx[,1])
-      plot(CurveData,
-           main='Dose-Response Curve',
-           xlab='ReDose (Gy)',
-           ylab='Lx/Tx',
-           xlim=c(0,Xlim*1.05),
-           ylim=c(0,Ylim*1.05),
-           pch=18,
-           cex=3,
-           xaxs='i',
-           yaxs='i',
-           lab=c(7,7,9) )
-      ###
-      ### points out calculate Dose values corresponded to Ltx
-      points(Dose[,1],inltx[,1],pch=5,cex=2,col='blue')
-      ###
-      ### add a fitting curve to the plot
-      x<-NULL
-      if(npars==2) {
-        curve(LMpars[1,1]*x+LMpars[2,1],type='l',add=TRUE,lw=2,from=0,to=Xlim*1.05)
-      } else if(npars==3) {
-        curve(LMpars[1,1]*(1-exp(-LMpars[2,1]*x))+LMpars[3,1],type='l',add=TRUE,lw=2,from=0,to=Xlim*1.05)
-      } else {
-        curve(LMpars[1,1]*(1-exp(-LMpars[2,1]*x))+LMpars[3,1]*x+LMpars[4,1],type='l',add=TRUE,lw=2,from=0,to=Xlim*1.05)
-      } # end if
-      ###
-      ### add a legend
-      legend("bottomright", 
-             legend=paste('Fitting Model:',model,sep=' '),
-             col='black',
-             yjust=2,
-             ncol=1,
-             bty="n")
-      ###
-      ### and dash line for each calculated paired value 
-      if(dashline) {
-        for(i in 1:nrow(Dose) ) {
-          lines(c(0,Dose[i,1],Dose[i,1]),c(inltx[i,1],inltx[i,1],0),lty='dashed',lwd=1)
-        } # end for
-      } # end if
-      ###
-      ### add error bars only if standard errors for Doses are available
-      Findex<-which(!is.na(Dose[,2]))    # here Findex has been reset
-      arr<-suppressWarnings(arrows(Dose[Findex, 1]-Dose[Findex, 2]/2,inltx[Findex,1],Dose[Findex, 1]+Dose[Findex, 2]/2,
-                            inltx[Findex,1],code=3,lwd=2.5,angle=90,length=0.05,col="black"))
-    } else {
-      cat('Warning: Failing in Plot Drawing, No Available Equivalent Dose!','\n\n')
-    } # end if
-  } # end if
-  ### 
-  ###output the results    
-  return(output)
-  ###
-} # end function SGCED.default
-###
-################################################ END FUNCTION SGCED ######################################################## 
+############################################ End FUNCTION RadialPlotter #######################################
 ###
 ###
+### ***********************************************************************************************************************
+###
+###
+################################################# FUNCTION decomp #############################################
 ###
 ### Author: Peng Jun, 2013.06.05
 ###
@@ -513,8 +251,6 @@ SGCED.default<-function(CurveData,
 ###              Jain, M., Murray, A.S., Boetter-Jensen, L., 2003. Characterisation of blue-light stimulated 
 ###              luminescence components in different quartz samples: implications for dose measurement. Radiation
 ###              Measurements, 37 (4-5), pp. 441-449.
-### 
-######################################### FUNCTION DECOMP ###############################################
 ###
 decomp<-function(SigData,
                  ncomp=3,
@@ -690,5 +426,320 @@ decomp.default<-function(SigData,
 } # end function decomp
 ###
 ###
-######################################### END FUNCTION DECOMP ###############################################
+######################################### END FUNCTION decomp ###############################################
 ###
+###
+### ************************************************************************************************************************************
+###
+###
+########################################## FUNCTION calED ##################################################
+###
+### Author:: Peng Jun, 2013.06.22
+###
+### Reference: Duller, G.A.T., 2007. Assessing the error on equivalent dose estimates derived from single aliquot
+###            regenerative dose measurements. Ancient TL 25, pp. 15-24.
+###
+###            Duller, G., 2007. Analyst. pp. 27-28.
+###
+##############################
+calED<-function(CurveData,
+                Ltx,
+                model='line',
+                iniPars=NULL,
+                ErrorMethod='mc',
+                MCiter=1e3,
+                plot=TRUE) {
+  UseMethod('calED')
+}
+###
+### default method for function calED
+##########################################
+calED.default<-function(CurveData,
+                        Ltx,
+                        model='line',
+                        iniPars=NULL,
+                        ErrorMethod='mc',
+                        MCiter=1e3,
+                        plot=TRUE)  {
+  ###
+  ### stop if not
+  stopifnot(!is.null(ncol(CurveData)),
+            ncol(CurveData)==3,
+            is.numeric(Ltx),
+            length(Ltx)==2,
+            all(Ltx>0 & Ltx<max(CurveData[,2])),
+            model%in%c('line','exp','line+exp'),
+            is.numeric(iniPars) || is.null(iniPars),
+            ErrorMethod%in%c('sp','mc'),
+            MCiter>=1e2,
+            MCiter<=1e5,
+            is.logical(plot) )
+  ###
+  ###
+  if(is.null(iniPars)) {
+    # initilize parameters if initial 
+    # parameters have not been provided
+    if(model=='line') {
+      iniPars<-c(1.0,1.0)
+    } else if(model=='exp') {
+      iniPars<-c(5.0,0.05,0.05)
+    } else {
+      iniPars<-c(5.0,0.05,0.05,0.05)
+    } # end if
+  } else {
+    # check if iniPars have been provided appropriately
+    if(model=='line' && length(iniPars)!=2) {
+      stop('Linear Model Needs Two Initial Parameters')
+    } # end if
+    if(model=='exp' && length(iniPars)!=3) {
+      stop('Exponential Model Needs Three Initial Parameters')
+    } # end if
+    if(model=='line+exp' && length(iniPars)!=4) {
+      stop('Linear+Exponential Model Needs Four Initial Parameters')
+    } # end if
+  } # end if
+  ###
+  ###     
+  # check if data is enough for model fitting
+  ndose<-nrow(CurveData)                 # ndose
+  if(model=='line' && ndose<2) {
+    stop('Fitting a Linear Model Meeds at Least Two Paired Observations')
+  } # end if
+  if(model=='exp' && ndose<3) {
+     stop('Fitting a Exponential Model Needs at Least Three Paired Observations')
+  } # end if
+  if(model=='line+exp' && ndose<4) {
+    stop('Fitting a Linear+Exponential Model Needs at Least Four Paired Observations')
+  } # end if
+  ###
+  ### *************************************************************
+  ### specify parameters that will be used 
+  ### in Fortran subroutine 'sgc.f90'
+  Dose<-CurveData[,1]                      # dose
+  ltx<-cbind(CurveData[,2],CurveData[,3])  # ltx
+  inltx<-Ltx                               # inltx
+  outDose<-vector(length=2L)               # outDose
+  pars<-iniPars                            # pars
+  npars<-length(pars)                      # npars
+  predtval<-vector(length=ndose)           # predtval
+  parserrors<-vector(length=npars)         # parserrors
+  value<- -99.0                            # value
+  mcED<-vector(length=MCiter)              # mcED
+  if(ErrorMethod=='sp')  {
+    method<-1
+  } else {                                 # method
+    method<-2
+  } # end if
+  motoiter<-MCiter                         # motoiter
+  errorflag<-vector(length=2)              # errorflag
+  ### 
+  ### *************************************************************
+  ###
+  res<-.Fortran('calED',as.double(Dose),as.double(ltx),as.integer(ndose),as.double(inltx),
+                        outDose=as.double(outDose),pars=as.double(pars),as.integer(npars),
+                        predtval=as.double(predtval),parserrors=as.double(parserrors),
+                        value=as.double(value),mcED=as.double(mcED),as.integer(method),
+                        as.integer(motoiter),errorflag=as.integer(errorflag),package='RadialPlotter')
+  ###
+  ###
+  ### error checking 
+  if(res$errorflag[1]!=123 || res$errorflag[2]!=0) {
+    stop('Fatal Error: Fail in Dose-Response Curve Fitting!')
+  } # end if
+  ###
+  ### set LMpars for output
+  LMpars<-cbind(res$pars,res$parserrors)
+  colnames(LMpars)<-c('Estimate','Std.Error')
+  rowname<-c('a','b','c','d')
+  rownames(LMpars)<-rowname[1:npars]    
+  ###
+  ###
+  ### set fit.value for output
+  fit.value<-cbind(CurveData[,1:2],res$predtval)
+  colnames(fit.value)<-c('ReDose','Lx/Tx','Fit.Lx/Tx')
+  rownames(fit.value)<-paste('ReDose.',1:ndose,sep='')
+  ###
+  ### set Dose for output
+  ED<-c('ED'=res$outDose[1],'Std.ED'=res$outDose[2])
+  ###
+  ### reset mcED
+  if(ErrorMethod=='sp') {
+    res$mcED<-NULL
+  } # end if
+  ###
+  ### prepare results for output
+  output<-list('mcED'=res$mcED,
+               'LMpars'=LMpars,
+               'residual'=res$value,
+               'fit.value'=fit.value,
+               'ED'=ED )
+  ###
+  ###
+  if(plot) {
+    Xlim<-max(CurveData[,1],ED[1])
+    Ylim<-max(CurveData[,2],inltx[1])
+    plot(NA,NA,
+         main='Dose-Response Curve',
+         xlab='ReDose (Gy)',
+         ylab='Lx/Tx',
+         xlim=c(0,Xlim*1.05),
+         ylim=c(0,Ylim*1.05),
+         xaxs='i',
+         yaxs='i',
+         lab=c(7,7,9) )
+    ###
+    ### add a density curve if ErrorMethod='mc'
+    if(ErrorMethod=='mc') {
+      dmcED<-density(res$mcED)
+      dxy<-data.frame(unclass(dmcED)[1:2])
+      dxy[,2]<-(dxy[,2]-min(dxy[,2]))/(max(dxy[,2])-min(dxy[,2]))*Ltx[1]*0.9
+      polygon(dxy,col='grey')
+    } # end if
+    ###
+    ### add ReDose as points
+    points(CurveData[,1:2],pch=1,cex=3)
+    ###
+    ### add error bars to Lx/Tx
+    arr<-suppressWarnings(arrows(Dose,ltx[,1]-ltx[,2]/2,Dose,
+                          ltx[,1]+ltx[,2]/2,code=3,lwd=2.5,
+                          angle=90,length=0.05,col="black"))
+    ###
+    ### points calculate Equivalent Dose .VS. Ltx
+    points(ED[1],inltx[1],pch=5,cex=2,col='blue')
+    ###
+    ### add a fitting curve to the plot
+    x<-NULL
+    if(npars==2) {
+      curve(LMpars[1,1]*x+LMpars[2,1],type='l',
+            add=TRUE,lw=2,from=0,to=Xlim*1.05)
+    } else if(npars==3) {
+      curve(LMpars[1,1]*(1-exp(-LMpars[2,1]*x))+LMpars[3,1],type='l',
+            add=TRUE,lw=2,from=0,to=Xlim*1.05)
+    } else {
+      curve(LMpars[1,1]*(1-exp(-LMpars[2,1]*x))+LMpars[3,1]*x+LMpars[4,1],type='l',
+            add=TRUE,lw=2,from=0,to=Xlim*1.05)
+    } # end if
+    ###
+    ### add a dash line to the plot
+    lines(c(0,ED[1],ED[1]),c(inltx[1],inltx[1],0),lty='dashed',lwd=2)
+    ###
+    ### add error bars if standard errors for Doses are available
+    if(is.finite(ED[2])) {
+      arr<-suppressWarnings(arrows(ED[1]-ED[2]/2,inltx[1],ED[1]+ED[2]/2,
+                            inltx[1],code=3,lwd=2.5,angle=90,length=0.05,col="black"))
+    } # end if
+  } # end if
+  ###
+  ### output the results    
+  return(output)
+} # end function calED
+###
+####################################### END FUNCTION calED ##################################################
+###
+###
+### **************************************************************************************************************************************
+###
+###
+######################################### FUNCTION sgcED ####################################################
+###
+### Author: Peng Jun, 2013.06.23
+###
+### References: Roberts,H.M. and Duller,G.A.T., 2004. Standardised growth curves for optical dating of sediment
+###             using multiple-grain aliquots. Radiation Measurements 38, pp. 241-252.
+###
+###             Duller, G.A.T., 2007. Assessing the error on equivalent dose estimates derived from single aliquot
+###             regenerative dose measurements. Ancient TL 25, pp. 15-24.
+###
+##############################
+sgcED<-function(CurveData,
+                Ltx,
+                model='line',
+                iniPars=NULL,
+                ErrorMethod='mc',
+                MCiter=1e3,
+                plot=TRUE)  {
+   UseMethod('sgcED')
+}
+### default method for function sgc.ED
+###########################################
+sgcED.default<-function(CurveData,
+                        Ltx,
+                        model='line',
+                        iniPars=NULL,
+                        ErrorMethod='mc',
+                        MCiter=1e3,
+                        plot=TRUE)  {
+  ### stop if not
+  stopifnot(!is.null(ncol(Ltx)),
+            ncol(Ltx)==2,
+            is.logical(plot))
+  ###
+  ### calculate Equivalent Dose
+  nLtx<-nrow(Ltx)
+  ED<-matrix(nrow=nLtx,ncol=2L)
+  for( i in 1:nLtx )  {
+    res<-calED(CurveData,as.numeric(Ltx[i,]),model,
+               iniPars,ErrorMethod,MCiter,plot=FALSE)
+    iniPars<-res$LMpars[,1]
+    ED[i,]<-res$ED
+  } # end for
+  ###
+  ###
+  ### reset ED
+  rownames(ED)<-paste('NO.',1:nLtx,sep='')
+  colnames(ED)<-c('ED','Std.ED')
+  ###
+  ###
+  ### prepare results for output
+  output<-list('LMpars'=res$LMpars,
+               'residual'=res$residual,
+               'fit.value'=res$fit.value,
+               'ED'=ED )
+  ###
+  ### plot or not
+  if(plot) {
+    Xlim<-max(CurveData[,1],ED[,1])
+    Ylim<-max(CurveData[,2],Ltx[,1])
+    plot(NA,NA,
+         main='Dose-Response Curve',
+         xlab='ReDose (Gy)',
+         ylab='Lx/Tx',
+         xlim=c(0,Xlim*1.05),
+         ylim=c(0,Ylim*1.05),
+         xaxs='i',
+         yaxs='i',
+         lab=c(7,7,9) )
+    ###
+    ### add ReDose as points
+    points(CurveData[,1:2],pch=1,cex=3)
+    ###
+    ### add error bars to Lx/Tx
+    arr<-suppressWarnings(arrows(ED[,1]-ED[,2]/2,Ltx[,1],ED[,1]+ED[,2]/2,
+                          Ltx[,1],code=3,lwd=2.5,angle=90,length=0.05,col="black"))
+    ###
+    ### points calculate Equivalent Dose .VS. Ltx
+    points(ED[,1],Ltx[,1],pch=5,cex=2,col='blue')
+    ###
+    ### add a fitting curve
+    x<-NULL
+    if(model=='line') {
+      curve(res$LMpars[1,1]*x+res$LMpars[2,1],type='l',
+            add=TRUE,lw=2,from=0,to=Xlim*1.05)
+    } else if(model=='exp') {
+      curve(res$LMpars[1,1]*(1-exp(-res$LMpars[2,1]*x))+res$LMpars[3,1],type='l',
+            add=TRUE,lw=2,from=0,to=Xlim*1.05)
+    } else {
+      curve(res$LMpars[1,1]*(1-exp(-res$LMpars[2,1]*x))+res$LMpars[3,1]*x+res$LMpars[4,1],type='l',
+            add=TRUE,lw=2,from=0,to=Xlim*1.05)
+    } # end if
+    ###
+    ### add a dash line 
+    for(i in 1: nLtx ) {
+      lines(c(0,ED[i,1],ED[i,1]),c(Ltx[i,1],Ltx[i,1],0),lty='dashed',lwd=1)
+    } # end for
+  } # end if
+  ###
+  return(output)
+} # end function sgcED   
+###
+####################################### END FUNCTION sgcED ###############################################

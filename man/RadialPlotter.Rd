@@ -110,19 +110,13 @@ I also thank Silke Schmidt for providing published OSL data (Silke Schmidt et al
 }
 
 \seealso{
-  \link{optim},
-  \link{nlm},
-  \link{nlminb} 
+  \link{optim}
 }
 
 \examples{
 #
-#
 # Loading equivalent dose data
   data(EDdata)
-#
-#
- require(graphics)
 #
 # Specifying the number of component to be 1 to do central age model analysis
   RadialPlotter(EDdata,ncomp=1)

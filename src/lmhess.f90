@@ -17,19 +17,28 @@ subroutine lmhess(pars,xdat,ydat,npars,ndat,tol,minAbsPar,&
 ! value                :: output, real value, the correspond function value for the specified parameters 
 ! errorflag(5)         :: output, integer values, error message generated during the calling:
 !                         1) if subroutine GJordan is called sucessfully, errorflag(1)=0, otherwise 1;
-!                         2) if function value can be calculated, errorflag(2)=0, otherwise 1;
-!                         3) if gradient can be calculated, errorflag(3)=0, otherwise 1; 
-!                         4) if hessian can be calculated, errorflag(4)=0, otherwise 1; 
-!                         5) if no error appears in arrary allocation, errorflag(5)=0, otherwise 1.
+!                         2) if function value can be calculated,         errorflag(2)=0, otherwise 1;
+!                         3) if gradient can be calculated,               errorflag(3)=0, otherwise 1; 
+!                         4) if hessian can be calculated,                errorflag(4)=0, otherwise 1; 
+!                         5) if no error appears in arrary allocation,    errorflag(5)=0, otherwise 1
 ! model                :: input, integer, a model to be used for approximation:
-!                         1) y=I(1)*exp(-lamda(1)*x)+I(2)*exp(-lamda(2)*x)+...+I(k)*exp(-lamda(k)*x)
-!                         2) y=a*x+b
-!                         3) y=a*(1-exp(-b*x))+c
-!                         4) y=a*(1-exp(-b*x)+c*x+d
+!                         1) y=I(1)*exp(-lamda(1)*x)+
+!                              I(2)*exp(-lamda(2)*x)+...+
+!                              I(k)*exp(-lamda(k)*x),  fitting a 'cw' signal curve
+!
+!                         2) y=a*x+b, fitting linear grow curve
+!
+!                         3) y=a*(1-exp(-b*x))+c, fitting exponential grow curve
+!
+!                         4) y=a*(1-exp(-b*x)+c*x+d, fitting exponential plus linear grow curve
+!
+!                         5) y=a1*b1*(x/max(x))*exp(-b1*x^2)/2/max(x))+
+!                              a2*b2*(x/max(x))*exp(-b2*x^2)/2/max(x))+...+
+!                              ak*bk*(x/max(x))*exp(-bk*x^2)/2/max(x)), fitting a 'lm' signal curve
 !
 ! Dependence:: subroutine GJordan, inter function fun34
 !
-! Author:: Peng Jun, 2013.05.21, revised in 2013.05.23
+! Author:: Peng Jun, 2013.05.21, revised in 2013.05.23, revised in 2013.07.24
 !
 ! Reference:  Jose Pinheiro, Douglas Bates, Saikat DebRoy, Deepayan Sarkar and the
 !             R Development Core Team (2013). nlme: Linear and Nonlinear Mixed
@@ -60,14 +69,15 @@ subroutine lmhess(pars,xdat,ydat,npars,ndat,tol,minAbsPar,&
   real  (kind=8)::pcols(npars,2*npars+1)
   real  (kind=8),allocatable::xcols(:,:),cxcols(:,:)
   real  (kind=8),allocatable::pxcols(:,:)
-  real(kind=8),parameter::eps=6.055454e-06                  
+  real  (kind=8),parameter::eps=6.055454e-06       
+  real  (kind=8)::maxx           
   !
   ! Decide the incr values
   ! for each initial par in pars, check if it
   ! is smaller than minabspar, the incr will
   ! be decided through this check
   do i=1,npars
-    if( abs(pars(i))<=minAbsPar )  then
+    if(abs(pars(i))<=minAbsPar)  then
       incr(i)=minAbsPar*eps
     else
       incr(i)=abs(pars(i))*eps
@@ -243,7 +253,7 @@ subroutine lmhess(pars,xdat,ydat,npars,ndat,tol,minAbsPar,&
   do j=1,npars
     do i=1,npars
         if (i==j) diagpar(i,j)=pxcols(1+npars+i,1)
-        if (i>j ) diagpar(j+1:npars,j)=pxcols(ncols:ncols+npars-j-1,1)  
+        if (i>j)  diagpar(j+1:npars,j)=pxcols(ncols:ncols+npars-j-1,1)  
     end do
     ncols=ncols+npars-j
   end do
@@ -259,17 +269,17 @@ subroutine lmhess(pars,xdat,ydat,npars,ndat,tol,minAbsPar,&
   hessian=diagpar+transpose(diagpar)
   !
   ! check Inf and NaN for value
-  if( value .ne. value .or. &
-      value+1.0D+00==value  )            errorflag(2)=1
+  if(value .ne. value .or. &
+     value+1.0D+00==value)              errorflag(2)=1
   ! check Inf and NaN for gradient
-  if( any(gradient .ne. gradient) .or. &
-      any(gradient+1.0D+00==gradient) )  errorflag(3)=1
+  if(any(gradient .ne. gradient) .or. &
+     any(gradient+1.0D+00==gradient))   errorflag(3)=1
   ! check Inf and NaN for hessian
-  if( any(hessian .ne. hessian) .or. &
-      any(hessian+1.0D+00==hessian) )    errorflag(4)=1
+  if(any(hessian .ne. hessian) .or. &
+     any(hessian+1.0D+00==hessian))     errorflag(4)=1
   ! if no error appears, return 
   return
-  !
+  ! INNER FUNCTION FOR HESSION APPROXIMATION
   contains
     function fun34(x)
       implicit none
@@ -279,24 +289,36 @@ subroutine lmhess(pars,xdat,ydat,npars,ndat,tol,minAbsPar,&
       real(kind=8),dimension(4)::cx
       integer(kind=4)::k
       !
-      cx=0.0D+00
       if(model==1) then
+        ! for fitting 'cw'
         fvec=0.0D+00
         do k=1,npars/2
           fvec=fvec+x(k)*dexp(-x(k+npars/2)*xdat)   
         end do
-      else 
+      else if(model>=2 .and. model<=4) then
+        ! for fitting grow curve
+        cx=0.0D+00
         cx(1:npars)=x
         if(model==2) then
+          ! linear
           fvec=cx(1)*xdat+cx(2)
         else if(model==3) then
+          ! exponential 
           fvec=cx(1)*(1.0D+00-dexp(-cx(2)*xdat))+cx(3)
         else if(model==4) then
+          ! exponential plus linear
           fvec=cx(1)*(1.0D+00-dexp(-cx(2)*xdat))+cx(3)*xdat+cx(4)
         end if
+      else if(model==5) then
+        ! for fitting 'lm'
+        maxx=maxval(xdat)
+        fvec=0.0D+00
+        do k=1,npars/2
+          fvec=fvec+x(k)*x(k+npars/2)*(xdat/maxx)*&
+               dexp(-x(k+npars/2)*xdat**2/2.0D+00/maxx)  
+        end do
       end if 
-      fun34=sqrt( sum( (fvec-ydat)**2 ) )
+      fun34=sqrt(sum((fvec-ydat)**2))
       return
     end function fun34
-  !
 end subroutine lmhess

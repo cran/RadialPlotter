@@ -45,6 +45,5 @@ subroutine interpolate(Dose,ltx,pars,npars,lowb,upb,value)
   else if(npars==4) then
     value=(cpars(1)*(1.0D+00-dexp(-cpars(2)*Dose))+cpars(3)*Dose+cpars(4)-ltx)**2
   end if
-  !
   return
 end subroutine interpolate

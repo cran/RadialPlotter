@@ -72,6 +72,7 @@ subroutine diffev(npars,tim,sig,ntim,lamda,ithn,value,&
                                                              1.0D-06, 0.1D+00,&
                                                              1.0D-06, 0.05D+00/), (/2,7/) )      ! the total vector space 
   integer(kind=4)::i,j,iter
+  integer(kind=4),parameter::typ=1
   !
   ! initialzing space using values in tspace
   space=tspace(:,1:npars)
@@ -123,12 +124,12 @@ subroutine diffev(npars,tim,sig,ntim,lamda,ithn,value,&
       if( all(y>0.0D+00) )  then
         !
         ! calculate correspond ithn values, lamda values using y values
-        call targfunc(y,npars,tim,sig,targtol,ntim,&
-                      yvalue,yithn,errorflagy)
+        call targfunc(y,npars,tim,sig,targtol,typ,&
+                      ntim,yvalue,yithn,errorflagy)
         !
         ! calculate correspond ithn values, lamda values, using the ith agent values
-        call targfunc(agents(j,:),npars,tim,sig,targtol,ntim,&
-                      agentsvalue,agentsithn,errorflagagents)
+        call targfunc(agents(j,:),npars,tim,sig,targtol,typ,&
+                      ntim,agentsvalue,agentsithn,errorflagagents)
         !
         ! replace the ith agent by y if:
         ! 1) function value can be successfully calculated using Linear Algebra
@@ -170,8 +171,8 @@ subroutine diffev(npars,tim,sig,ntim,lamda,ithn,value,&
   errorflag(2)=1
   do i=1, np
     if( all(agents(i,:)>0.0D+00) )  then
-      call targfunc(agents(i,:),npars,tim,sig,targtol,ntim,&
-                    agentsvalue,agentsithn,errorflagagents)
+      call targfunc(agents(i,:),npars,tim,sig,targtol,typ,&
+                    ntim,agentsvalue,agentsithn,errorflagagents)
       ! 
       if(errorflagagents==0 .and. agentsvalue<=value ) then
         value=agentsvalue
@@ -195,7 +196,7 @@ subroutine diffev(npars,tim,sig,ntim,lamda,ithn,value,&
     ! set predict
     predict=0.0D+00
     do i=1,npars
-      predict=predict+ithn(i)*dexp( -lamda(i)*tim )
+      predict=predict+ithn(i)*dexp(-lamda(i)*tim)
     end do
   end if
   !

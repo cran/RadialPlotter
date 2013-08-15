@@ -1,9 +1,11 @@
-subroutine lmfunc(xdat,ydat,m,n,x,fvec,fjac,ldfjac,iflag)
+subroutine lmfunc1(xdat,ydat,m,n,x, &
+                  fvec,fjac,ldfjac,iflag)
 ! ----------------------------------------------------------------------------------------------------------------------------
-! For formula I(t)=a1*exp(-b1*t)+a2*exp(-b2*t)+...+ak*exp(-bk*t), K=1:7,
+! For formula I(t)=a1*b1*(t/max(t))*exp(-b1*t^2)/2/max(t))+...+
+!                  ak*bk*(t/max(t))*exp(-bk*t^2)/2/max(t)), k=1:7
 ! lmfunc is used to calculate vectors fevc(i)=I(t,i)-ydat(i), i=1:length(ydat), 
-! so is the jacobian matrix fjac, they will be passed to subroutine lmfit
-! to perform the Levenberg-Marquadt optimization.
+! so is the jacobian matrix fjac, they will be passed to subroutine lmfit to 
+! perform the Levenberg-Marquadt optimization.
 !
 ! m,                   input:: integer, length of xdat or ydat.
 ! n,                   input:: integer, dimension of the problem (length of x).
@@ -17,7 +19,7 @@ subroutine lmfunc(xdat,ydat,m,n,x,fvec,fjac,ldfjac,iflag)
 !                              this vector in FVEC. If IFLAG = 2 on input, FCN should calculate the jacobian at X and
 !                              return this matrix in FJAC. To terminate the algorithm, the user may set IFLAG negative.
 !
-! Author:: Peng Jun, 2013.05.21
+! Author:: Peng Jun, 2013.07.24
 !
 ! Dependence:: No
 !-----------------------------------------------------------------------------------------------------------------------------
@@ -32,24 +34,30 @@ subroutine lmfunc(xdat,ydat,m,n,x,fvec,fjac,ldfjac,iflag)
   real   (kind=8),dimension(ldfjac,n),intent(out)::fjac
   ! local variables
   integer(kind=4)::i
+  real   (kind=8)::maxx
   !
   ! calculate values for targeted function and 
   ! store them in vector fvec
+  maxx=maxval(xdat)
   if(iflag==1) then
     fvec=0.0D+00
     do i=1,n/2
-      fvec=fvec+x(i)*dexp(-x(i+n/2)*xdat)
+      fvec=fvec+x(i)*x(i+n/2)*(xdat/maxx)*&
+           dexp(-x(i+n/2)*xdat**2/2.0D+00/maxx)
     end do
     fvec=fvec-ydat
   ! calculate matrix jacobian in a column by column order
   else if(iflag==2)  then
     do i=1,n/2
-      fjac(:,i)=dexp(-x(i+n/2)*xdat)
+      fjac(:,i)=x(i+n/2)*(xdat/maxx)*&
+                dexp(-x(i+n/2)*xdat**2/2.0D+00/maxx)
     end do
     do i=n/2+1,n
-      fjac(:,i)=-x(i-n/2)*xdat*dexp(-x(i)*xdat)
+      fjac(:,i)=(1.0D+00-x(i)*xdat**2/2.0D+00/maxx)*&
+                dexp(-x(i)*xdat**2/2.0D+00/maxx)*&
+                x(i-n/2)*(xdat/maxx)
     end do
   end if
-  !
+  ! now return
   return
-end subroutine lmfunc  
+end subroutine lmfunc1  

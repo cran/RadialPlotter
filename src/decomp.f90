@@ -20,7 +20,7 @@ subroutine decomp(ncomp,tim,sig,ntim,pars,Stdpars,value,&
 !                            1) if parameters can not be initialized using differential evolution, errorflag(1)=1, else 0;
 !                            2) if parameters can not be optimized using Levenberg-Marquadt method, errorflag(2)=1, else 0;
 !                            3) if simple trails have not been performed, errorflag(3)=0, if success in simple trails, 
-!                               errorflag(3)=1,else errorflag(3)=-1.
+!                               errorflag(3)=1, else errorflag(3)=-1.
 !
 ! Author:: Peng Jun, 2013.06.05
 !
@@ -65,7 +65,7 @@ subroutine decomp(ncomp,tim,sig,ntim,pars,Stdpars,value,&
   ! variables for subroutine lmfit
   real   (kind=8),dimension(2*ncomp)::lmpars
   real   (kind=8),dimension(2*ncomp)::lmStdpars
-  real   (kind=8),dimension(ntim)::lmpredict
+  real   (kind=8),dimension(ntim)::lmpredtval
   real   (kind=8),parameter::lmtol=1.0D-07
   real   (kind=8)::lmvalue
   integer(kind=4)::lmErr
@@ -87,6 +87,7 @@ subroutine decomp(ncomp,tim,sig,ntim,pars,Stdpars,value,&
                                                    0.0003D+00 /)     ! Slow4
   ! local variables
   integer(kind=4)::i
+  integer(kind=4),parameter::typ=1
   !
   ! at this points all errors are 0
   errorflag=0
@@ -109,13 +110,13 @@ subroutine decomp(ncomp,tim,sig,ntim,pars,Stdpars,value,&
   ! call lmfit if diffev success
   if(errorflag(1)==0) then
     lmpars=(/dithn,dlamda/)
-    call lmfit(tim,sig,ntim,lmpars,2*ncomp,&
-               lmStdpars,lmpredict,lmvalue,lmtol,lmErr)
+    call lmfit(tim,sig,ntim,lmpars,2*ncomp,typ,&
+               lmStdpars,lmpredtval,lmvalue,lmtol,lmErr)
     ! reset pars, stdpars, predtval and value if lmErr=0
     if(lmErr==1) then
       pars=lmpars
       Stdpars=lmStdpars
-      predtval=lmpredict
+      predtval=lmpredtval
       value=lmvalue
     else 
       ! set errorflag(2) to be 1 if lmfit fails
@@ -135,18 +136,18 @@ subroutine decomp(ncomp,tim,sig,ntim,pars,Stdpars,value,&
       !
       tlamda=initry(iarray)
       ! obtain tithn
-      call targfunc(tlamda,ncomp,tim,sig,targtol,&
+      call targfunc(tlamda,ncomp,tim,sig,targtol,typ,&
                       ntim,tvalue,tithn,targErr)
       ! call lmfit if targErr=0
       if(targErr==0) then
         lmpars=(/tithn,tlamda/)
-        call lmfit(tim,sig,ntim,lmpars,2*ncomp,lmStdpars,&
-                   lmpredict,lmvalue,lmtol,lmErr)
+        call lmfit(tim,sig,ntim,lmpars,2*ncomp,typ,&
+                   lmStdpars,lmpredtval,lmvalue,lmtol,lmErr)
         ! reset pars, stdpars, predtval and value if lmErr=0
         if(lmErr==1) then
           pars=lmpars
           Stdpars=lmStdpars
-          predtval=lmpredict
+          predtval=lmpredtval
           value=lmvalue
           ! successful simple trails 
           errorflag(3)=1

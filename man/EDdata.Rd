@@ -5,28 +5,30 @@
 EDdata is used for exemplifying the usage of function RadialPlotter
 }
 \description{
-35 equivalent dose values come from Tengger Desert in northern china
+Two sets equivalent dose values.
 }
 \usage{data(EDdata)}
 \format{
-A data.frame with two columns contained equivalent dose and associated errors
+A list contains two sets of equivalent dose values
+\describe{
+  \item{gl11}{a data.frame contains 35 equivalent dose values from aeolain at Tengger Desert (Peng and Han, 2013)}
+  \item{al3}{a data.frame contains 84 equivalent dose values from alluvial deposits at andean precordillera (Schmidt et al, 2012)}
 }
-\source{
-OSL dated by Peng Jun in Chinese Academy of Sciences, Qinghai Insititute of Salt Lakes
 }
 \references{
-Unpublished OSL equivalent doses data
+Schmidt, S., Tsukamoto, S., Salomon, E., Frechen, M., Hetzel, R., 2012. Optical dating of alluvial deposits at the orogenic front of the andean precordillera (Mendoza, Argentina). Geochronometria, 39 (1), pp. 62-75.
+
+Peng, J., Han, F.Q., 2013. Selections of fast-component OSL signal using sediments from the south edge of Tengger Desert. Acta Geoscientica Sinica, 34 (1), pp. 1-7.
 }
 \examples{
-#
 # loading the equivalent dose data
   data(EDdata)
-#
 # plot a probability density curve 
-  x=EDdata
+  x<-EDdata$gl11
   plot(density(x[,1], weights=x[,2]/sum(x[,2])),col='blue',
        main='Sample.Tengger',xlab='De(Gy)',ylab='Density')
 }
 \keyword{package RadialPlotter}
 \keyword{OSL dating}
 \keyword{OSL age models}
+\keyword{equivalent dose}

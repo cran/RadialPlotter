@@ -1,8 +1,13 @@
 Version for package 'RadialPlotter'
+Version 1.85
+        * Parameters used for fitting a dose-response curve in function 'calED' and 'sgcED' now can be initialized automatically,
+          function 'decomp' is able to decompose OSL decay curve of type 'LM' in this version. And 'port' algorithm
+          is bundled to function 'RadialPlotter' for optimizing minimum age models. Now results of function
+          'RadialPlotter' is an object of class 'RadialPlotter'. 
 Version 1.8
         * Add a new function 'calED', some bugs in function 'SGCED' have been corrected.
 Version 1.7
-        * function 'decomp' and function 'SGCED' have been added to package 'RadialPlotter' in this version. 
+        * Function 'decomp' and function 'SGCED' have been added to package 'RadialPlotter' in this version. 
 Version 1.6
         * Possible complier dependent errors are removed.
 Version 1.5

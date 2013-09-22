@@ -10,15 +10,12 @@ that can be performed includes: central age model (CAM), minimum age model (MAM)
 }
 \usage{
 RadialPlotter(EDdata, 
-              ncomp = 0, 
-              addsigma = 0, 
-              maxiter = 500, 
-              maxcomp = 9, 
+              ncomp = 0, addsigma = 0, 
+              maxiter = 500, maxcomp = 9, 
               algorithm = c("lbfgsb","port"),
               eps = .Machine$double.eps^0.5, 
-              plot = TRUE,
-              zscale = NULL, 
-              samplename = NULL)
+              plot = TRUE, pcolor = "blue", psize = 1.5, 
+              kratio = 0.3, zscale = NULL, samplename = NULL)
 }
 \arguments{
   \item{EDdata}{\link{data.frame}(\bold{required}): equivalent doses and associated errors (a total of two columns), the routine do analyzes using log-scale, hence all equivalent doses used for fitting must be larger than 0
@@ -37,9 +34,15 @@ is set to be equal to the length of EDdata, but it will be both time consuming a
 }
   \item{eps}{\link{numeric}(with default): the maximum tolerance allowed for stopping the iterative process when performing central age model or finite mixture age model analysis, iterative process will stop if updated parameters satisfying ||pars-newpars||<=eps. It does not exert any effect if minimum age model is used
 }
-  \item{zscale}{\link{numeric}(optional): option for modifying the z-scale of radial plot manually. Example: \code{zscale = seq(min(EDdata),max(EDdata), by = 3L)}
-}
   \item{plot}{\link{logical}(with default): whether drawing the radial plot using estimated parameters or not
+}
+  \item{pcolor}{\link{character}(with default): color of points for plotting, input \link{colors}() see available colors
+}
+  \item{psize}{\link{numeric}(with default): size of points for plotting
+}
+  \item{kratio}{\link{numeric}(with default): an option used for modifying zscale, a bit like a curvature for z-axis
+}
+  \item{zscale}{\link{numeric}(optional): option for modifying the z-scale of radial plot manually. Example: \code{zscale = seq(min(EDdata),max(EDdata), by = 3L)}
 }
   \item{samplename}{\link{character}(optional): the name of the sample that used for optimizing, such as "Tengger"
 }
@@ -125,30 +128,30 @@ I also thank Silke Schmidt for providing published OSL data (Silke Schmidt et al
 # Loading equivalent dose data
   data(EDdata)
 # Specifying the number of component to be 1 to do central age model analysis
-  obj<-RadialPlotter(EDdata$gl11,ncomp=1,zscale=seq(16,45,3))
+  obj<-RadialPlotter(EDdata$gl11,ncomp=1,zscale=seq(20,37,3),psize=2)
   obj
 # Fitting finite mxiture age model with  a number of components of 7 (k=7)
-  obj<-RadialPlotter(EDdata$al3,ncomp=7,zscale=seq(25,90,5))
+  obj<-RadialPlotter(EDdata$al3,ncomp=7,zscale=seq(25,90,5),pcolor="gray")
   print(obj)
 # Picking out the appropriate number of components then fitting automatically
-  obj<-RadialPlotter(EDdata$al3,zscale=seq(25,90,5),samplename="AL3")
+  obj<-RadialPlotter(EDdata$al3,zscale=seq(24,93,7),samplename="AL3",pcolor="brown")
   obj
 # In a radical but not advisable case, one may set maxcomp to be the largest 
 # looping number of components that allowed
-  obj<-RadialPlotter(EDdata$gl11,maxcomp=35,samplename='GL11',zscale=seq(16,40,2))
+  obj<-RadialPlotter(EDdata$gl11,maxcomp=35,samplename='GL11',zscale=seq(20,37,3))
   unclass(obj)
 # Setting zscale manually
-  zscale<-seq(min(EDdata$al3[,1])-1,max(EDdata$al3[,1])+1,by = 5L)
-  obj<-RadialPlotter(EDdata$al3,maxcomp=13,zscale=zscale)
+  zscale<-seq(min(EDdata$al3[,1])-1,max(EDdata$al3[,1])+1,by = 15L)
+  obj<-RadialPlotter(EDdata$al3,maxcomp=13,zscale=zscale,kratio=0.5,psize=2)
   print(obj)
 # Performing minimum age model analysis with three parameters
-  obj<-RadialPlotter(EDdata$gl11,ncomp=-1,maxiter=100,zscale=seq(16,45,3))
+  obj<-RadialPlotter(EDdata$gl11,ncomp=-1,maxiter=100,zscale=seq(20,37,3),psize=2)
   class(obj)
 # Performing minimum age model analysis with three parameters (addsigma=0.05)
-  print(RadialPlotter(EDdata$al3,ncomp=-1,addsigma=0.05,
-        maxiter=100,algorithm="port",zscale=seq(25,90,5)))
+  print(RadialPlotter(EDdata$al3,ncomp=-1,addsigma=0.05,psize=2,kratio=0.5,
+        maxiter=100,algorithm="port",zscale=seq(24,93,7)))
 # Performing minimum age model analysis with four parameters
-  obj<-RadialPlotter(EDdata$al3,ncomp=-2,maxiter=100,zscale=seq(25,90,5))
+  obj<-RadialPlotter(EDdata$al3,ncomp=-2,maxiter=100,zscale=seq(24,93,7),psize=2)
   unclass(obj)
 # For the sample of interest, too larger addsigma value might be inappropriate 
 # and will result in an error

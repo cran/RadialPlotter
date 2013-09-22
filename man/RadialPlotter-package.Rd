@@ -4,21 +4,22 @@
 \title{Numeric routines for optical stimulated luminescence dating}
 \description{
 Four functions that wrapped with Fortran subroutines are availabe in package 'RadialPlotter' currently.\cr\cr
-Function "calED" fits dose-response curve and calculates equivalent dose in optically stimulated luminescence, assiociated standard error of equivlalent dose can also be estimated using either simple transformation or monte Carlo method.\cr\cr
-Function "decomp" decomposes the OSL decay curve (type "CW" and "LM") to a specified number of components.\cr\cr
-Function "RadialPlotter" performs statistical age models (log-scale) analysis and radial plot drawing. Routines for statistical age models analysis include: \cr
+Function "calED" fits dose-response curve and calculates equivalent dose in optically stimulated luminescence, assiociated standard error of equivlalent dose can also be estimated using either simple transformation or monte Carlo method (Duller, 2007).\cr\cr
+Function "decomp" decomposes the OSL decay curve (type "CW" and "LM") to a specified number of components, which supports the combination of differential evolution and
+Levenberg-Marquardt algorithm suggested by Bluszcz and Adamiec (2006).\cr\cr
+Function "RadialPlotter" performs statistical age models (log-scale) analysis (Galbraith and Roberts, 2012) and radial plot drawing (Galbraith, 1988). Routines for statistical age models analysis include: \cr
 Central age model (CAM) \cr
 Finite mixture age model (FMM) \cr
 Minimum age model with three parameters (MAM3) \cr
 Minimum age model with four parameters (MAM4) \cr\cr
-Function "sgcED" is a wrapped version of function "calED', fitting OSL dose-response curve and calculating equivalent doses using standardised growth curves (SGC) method.
+Function "sgcED" is a wrapped version of function "calED', fitting OSL dose-response curve and calculating a series of equivalent doses using standardised growth curves (SGC) method (Roberts and Duller, 2004).
 }
 \details{
 \tabular{ll}{
 Package: \tab RadialPlotter\cr
 Type: \tab Package\cr
-Version: \tab 1.9\cr
-Date: \tab 2013-08-15\cr
+Version: \tab 2.0\cr
+Date: \tab 2013-09-22\cr
 License: \tab GPL-3\cr
 }
 }

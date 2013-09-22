@@ -3,7 +3,7 @@ subroutine lmhess(pars,xdat,ydat,npars,ndat,tol,minAbsPar,&
 !--------------------------------------------------------------------------------------------------
 ! subroutine fdhessian is used to calculate the gradient, hessian matrix of a 
 ! given function contained in its inner, that is fun34 in CW-OSL fitting models, 
-! using finite-difference approximation
+! using finite-difference approximation (non-origin and origin, cw, lm)
 !
 ! pars(npars)          :: input, real values, the parameters of the function
 ! xdat (ndat)          :: input, real values, the xdat values 
@@ -35,6 +35,12 @@ subroutine lmhess(pars,xdat,ydat,npars,ndat,tol,minAbsPar,&
 !                         5) y=a1*b1*(x/max(x))*exp(-b1*x^2)/2/max(x))+
 !                              a2*b2*(x/max(x))*exp(-b2*x^2)/2/max(x))+...+
 !                              ak*bk*(x/max(x))*exp(-bk*x^2)/2/max(x)), fitting a 'lm' signal curve
+!
+!                         6) y=a*x, fitting linear grow curve (origin)
+! 
+!                         7) y=a*(1-exp(-b*x)), fitting exponential grow curve (origin)
+!
+!                         8) y=a*(1-exp(-b*x)+c*x, fitting exponential plus linear grow curve (origin)
 !
 ! Dependence:: subroutine GJordan, inter function fun34
 !
@@ -317,7 +323,21 @@ subroutine lmhess(pars,xdat,ydat,npars,ndat,tol,minAbsPar,&
           fvec=fvec+x(k)*x(k+npars/2)*(xdat/maxx)*&
                dexp(-x(k+npars/2)*xdat**2/2.0D+00/maxx)  
         end do
-      end if 
+      else if(model>=6 .and. model<=8) then
+        ! for fitting grow curve
+        cx=0.0D+00
+        cx(1:npars)=x
+        if(model==6) then
+          ! linear
+          fvec=cx(1)*xdat
+        else if(model==7) then
+          ! exponential 
+          fvec=cx(1)*(1.0D+00-dexp(-cx(2)*xdat))
+        else if(model==8) then
+          ! exponential plus linear
+          fvec=cx(1)*(1.0D+00-dexp(-cx(2)*xdat))+cx(3)*xdat
+        end if
+      end if
       fun34=sqrt(sum((fvec-ydat)**2))
       return
     end function fun34

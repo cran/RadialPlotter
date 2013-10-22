@@ -1,28 +1,43 @@
 subroutine diffev(npars,tim,sig,ntim,lamda,ithn,value,&
                   predict,agents,np,f,cr,maxiter,tol,errorflag)
-!-----------------------------------------------------------------------------------------------------------------------------
-! fitting OSL signal decay curve using differential evolution algorithm
-! I=a1*exp(-b1*t)+a2*exp(-b2*t)+...+ak*exp(-bk*t) will be fitted.
+!---------------------------------------------------------------------------------------------------------------------------------------
+! Fitting OSL signal decay curve using differential evolution algorithm, I=a1*exp(-b1*t)+a2*exp(-b2*t)+...+ak*exp(-bk*t) will be fitted.
+! ======================================================================================================================================
+! npars,                input:: integer, the dimension of the problem (length of parameters).
 !
-! npars,                input:: integer, the dimension of the problem
-! tim(ntim),            input:: real values, the time values
-! sig(lntim),           input:: real values, the signal values
-! ntim,                 input:: integer, the length of the observations ( tim or signal)
-! value,               output:: real value, minimized sum of the square of rediduals
-! lamda(npars),        output:: real values, estimated lamda values
-! ithn(npars),         output:: real values, estimated ithn values
-! predict(ntim),       output:: real values, fitted values correspond to sig values
-! agents(np,npars),    output:: real values, agents values calculated by differential evolution
-! np,                   input:: integer, a parameter used for differential evolution algorithm
-! f,                    input:: real value, a parameter used for differential evolution algorithm
-! cr,                   input:: real value, a parameter used for differential evolution algorithm
-! maxiter,              input:: integer, the maximum iterative number allowed for differential evolution algorithm
-! tol,                  input:: real value, the iteration of differential evolution will be stopped if tol has been reached
+! tim(ntim),            input:: real values, the time values.
+!
+! sig(lntim),           input:: real values, the signal values.
+!
+! ntim,                 input:: integer, the length of the observations (tim or signal).
+!
+! value,               output:: real value, minimized sum of the square of rediduals.
+!
+! lamda(npars),        output:: real values, estimated lamda values.
+!
+! ithn(npars),         output:: real values, estimated ithn values.
+!
+! predict(ntim),       output:: real values, fitted values correspond to signal values.
+!
+! agents(np,npars),    output:: real values, agents values calculated by differential evolution.
+!
+! np,                   input:: integer, argument used of differential evolution algorithm.
+!
+! f,                    input:: real value, argument used for differential evolution algorithm.
+!
+! cr,                   input:: real value, argument used for differential evolution algorithm.
+!
+! maxiter,              input:: integer, the maximum iterative number allowed for differential evolution algorithm.
+!
+! tol,                  input:: real value, the iteration of differential evolution will be stopped if tol has been reached.
+!
 ! errorflag(2),        output:: integer, error message generated during the calling:
-!                               1) if tol has been reached withn the maximum iterative number, errorflag(1)=0, otherwise 1;
-!                               2) if find at least one appropriate agent, errorflag(2)=0, otherwise 1.
-!
-! Author:: Peng Jun, 2013.05.31, revised in2013.06.03
+!                               1.1) if tol has been reached withn the maximum iterative number, errorflag(1)=0;
+!                               1.2) if tol has not been reached withn the maximum iterative number, errorflag(1)=1;
+!                               2.1) if find at least one appropriate agent, errorflag(2)=0;
+!                               2.2) if fail in find at least one appropriate agent, errorflag(2)=1.
+! =======================================================================================================================================
+! Author:: Peng Jun, 2013.05.31, revised in2013.06.03.
 ! 
 ! Dependence:: subroutine leaveone; subroutine NonReplaceSample; subroutine targfunc; subroutine sort; subroutine sd.
 !
@@ -30,22 +45,22 @@ subroutine diffev(npars,tim,sig,ntim,lamda,ithn,value,&
 !              OSL decay curves. Radiation Measurements 41, 886-891.             
 !
 !              Differential evolution, http://en.wikipedia.org/wiki/Differential_evolution
-!---------------------------------------------------------------------------------------------------------------------------
+!----------------------------------------------------------------------------------------------------------------------------------------
   implicit none
-  integer(kind=4),intent(in)::npars
-  integer(kind=4),intent(in)::ntim
-  integer(kind=4),intent(in)::np
-  integer(kind=4),intent(in)::maxiter
-  real   (kind=8),intent(in)::f
-  real   (kind=8),intent(in)::cr
-  real   (kind=8),intent(in)::tol
-  real   (kind=8),dimension(ntim),intent(in)::tim
-  real   (kind=8),dimension(ntim),intent(in)::sig
-  real   (kind=8),intent(out)::value
-  integer(kind=4),dimension(2),intent(out)::errorflag
-  real   (kind=8),dimension(npars),intent(out)::lamda
-  real   (kind=8),dimension(npars),intent(out)::ithn
-  real   (kind=8),dimension(ntim),intent(out)::predict
+  integer(kind=4),                    intent(in)::npars
+  integer(kind=4),                    intent(in)::ntim
+  integer(kind=4),                    intent(in)::np
+  integer(kind=4),                    intent(in)::maxiter
+  real   (kind=8),                    intent(in)::f
+  real   (kind=8),                    intent(in)::cr
+  real   (kind=8),                    intent(in)::tol
+  real   (kind=8),dimension(ntim),    intent(in)::tim
+  real   (kind=8),dimension(ntim),    intent(in)::sig
+  real   (kind=8),                    intent(out)::value
+  integer(kind=4),dimension(2),       intent(out)::errorflag
+  real   (kind=8),dimension(npars),   intent(out)::lamda
+  real   (kind=8),dimension(npars),   intent(out)::ithn
+  real   (kind=8),dimension(ntim),    intent(out)::predict
   real   (kind=8),dimension(np,npars),intent(out)::agents
   !
   ! local variables
@@ -63,7 +78,7 @@ subroutine diffev(npars,tim,sig,ntim,lamda,ithn,value,&
   real   (kind=8)                    ::yvalue,agentsvalue
   integer(kind=4)                    ::errorflagy, errorflagagents
   real   (kind=8),dimension(npars)   :: outsd
-  real   (kind=8),parameter          ::targtol=1.0D-07
+  real   (kind=8),parameter          ::targtol=1.0D-09
   real   (kind=8),dimension(2,7),parameter::tspace=reshape((/1.0D-01,10.0D+00,&        
                                                              1.0D-04, 5.0D+00,&
                                                              1.0D-04, 3.0D+00,&

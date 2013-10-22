@@ -1,16 +1,20 @@
 subroutine sd(mat,nrow,ncol,outsd)
-!-----------------------------------------------------------------------------
-! sd calculate standard deviations of matrix mat by column
+!----------------------------------------------------------------------------------
+! sd() calculate standard deviations of matrix mat by column.
+! =================================================================================
 !
-! mat(nrow,ncol),   input:: real values, a matrix to be calculated
-! nrow,             input:: integer, row numbers of mat
-! ncol,             input:: integer, col numbers of mat
-! outsd(ncol),     output:: real values, calculated standard deviations by col
+! mat(nrow,ncol),   input:: real values, a matrix to be calculated.
 !
-! Author:: Peng Jun
+! nrow,             input:: integer, row numbers of mat.
+!
+! ncol,             input:: integer, col numbers of mat.
+!
+! outsd(ncol),     output:: real values, calculated standard deviations by column.
+! =================================================================================
+! Author:: Peng Jun.
 !
 ! Dependence:: No
-!------------------------------------------------------------------------------
+!----------------------------------------------------------------------------------
   implicit none
   integer(kind=4),intent(in)::nrow
   integer(kind=4),intent(in)::ncol

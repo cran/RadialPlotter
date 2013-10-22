@@ -1,24 +1,35 @@
 subroutine fitlm(ncomp,tim,sig,ntim,pars,Stdpars,&
-                 value,predtval,errorflag)
-!---------------------------------------------------------------------------------------------------------------------
-! subroutine fitlm is used for fitting OSL signal of type 'lm'
-! using Levenberg-Marquadt method, a series combination of 
-! initial parameters will be given to call subroutine lmfit
+                 value,predtval,transf,errorflag)
+!----------------------------------------------------------------------------------------------------------------------
+! Subroutine fitlm() is used for fitting OSL signal of type "lm" using Levenberg-Marquadt method,  a series combination
+! of initial parameters will be given to call subroutine lmfit() to perform the fitting process.
+! =====================================================================================================================
 !
-! ncomp,             input:: integer, number of components
-! ntim,              input:: integer, length of tim or sig
-! tim(ntim),         input:: real values, time series
-! sig(ntim),         input:: real values, signal series
-! pars(2*ncomp),    output:: real values, estimated parameters
-! Stdpars(2*ncomp), output:: real values, estimated standard errors for parameters
-! value,            output:: real value, minimized objective function value
-! predtval(ntim),   output:: real values, predicted signal values correspond to sig
-! errorfalg,        output:: integer, error message generated during the calculation, 0 for successful work, 
-!                            1 for totally fail, -1 for Std.pars are not available
+! ncomp,             input:: integer, number of components to be decomposed.
 !
-!     Author:: Peng Jun, 2013.07.24, revised in 2013.08.03
+! ntim,              input:: integer, length of tim or signal
 !
-! Dependence:: subroutine comb_next; subroutine targfunc; subroutine lmfit
+! tim(ntim),         input:: real values, time values.
+!
+! sig(ntim),         input:: real values, signal values.
+!
+! transf,            input:: logical value, whether transform estimated parameters or not.
+!
+! pars(2*ncomp),    output:: real values, estimated parameters.
+!
+! Stdpars(2*ncomp), output:: real values, estimated standard errors of parameters.
+!
+! value,            output:: real value, minimized objective function value.
+!
+! predtval(ntim),   output:: real values, predicted signal values that corresponded to signal.
+!
+! errorfalg,        output:: integer, error message generated during the calculation:
+!                            1.1) a successful work given errorflag=0; 
+!                            1.2) a totally fail work given errorflag=1.
+! =====================================================================================================================
+!     Author:: Peng Jun, 2013.07.24, revised in 2013.08.03, revised in 2013.10.05.
+!
+! Dependence:: subroutine comb_next; subroutine targfunc; subroutine lmfit.
 ! 
 ! References:: Bluszcz, A., 1996. Exponential function fitting to TL growth data 
 !              and similar applications. Geochronometria 13, 135–141.
@@ -31,25 +42,27 @@ subroutine fitlm(ncomp,tim,sig,ntim,pars,Stdpars,&
 !              Measurements, 37 (4-5), pp. 441-449.
 !---------------------------------------------------------------------------------------------------------------------
   implicit none
-  integer(kind=4),intent(in)::ncomp
-  integer(kind=4),intent(in)::ntim 
-  real   (kind=8),dimension(ntim),intent(in)::tim
-  real   (kind=8),dimension(ntim),intent(in)::sig
-  real   (kind=8),dimension(ntim),intent(out)::predtval
+  integer(kind=4),                   intent(in)::ncomp
+  integer(kind=4),                   intent(in)::ntim 
+  real   (kind=8),dimension(ntim),   intent(in)::tim
+  real   (kind=8),dimension(ntim),   intent(in)::sig
+  logical,                           intent(in)::transf
+  real   (kind=8),dimension(ntim),   intent(out)::predtval
   real   (kind=8),dimension(2*ncomp),intent(out)::pars
   real   (kind=8),dimension(2*ncomp),intent(out)::Stdpars
-  integer(kind=4),intent(out)::errorflag
-  real   (kind=8),intent(out)::value
-  ! variables for subroutine lmfit
+  integer(kind=4),                   intent(out)::errorflag
+  real   (kind=8),                   intent(out)::value
+  !
+  ! Variables for subroutine lmfit()
   real   (kind=8),dimension(2*ncomp)::lmpars,cpars
   real   (kind=8),dimension(2*ncomp)::lmStdpars,cStdpars
   real   (kind=8),dimension(ntim)::lmpredtval,cpredtval
   real   (kind=8),parameter::lmtol=1.0D-07
   real   (kind=8)::lmvalue,cvalue
   integer(kind=4)::lmErr
-  ! variables for subroutine targfunc and subroutine comb_next
+  ! Variables for subroutine targfunc() and subroutine comb_next()
   logical:: done
-  real   (kind=8),parameter::targtol=1.0D-07
+  real   (kind=8),parameter::targtol=1.0D-09
   integer(kind=4)::targErr
   real   (kind=8)::tvalue
   integer(kind=4),dimension(ncomp)::iarray
@@ -64,60 +77,74 @@ subroutine fitlm(ncomp,tim,sig,ntim,pars,Stdpars,&
                                                    0.0003D+00 /)     ! Slow4
   integer(kind=4), parameter::typ=2
   integer(kind=4):: i
-  !
+  logical:: saving
+  real   (kind=8):: minvalue
+  ! 
+  saving=.false.
+  minvalue=1.0D+30
   errorflag=1
   done=.true.
   Loop: do i=1,permdex(ncomp)
-    ! obtain random set
+    ! Obtain random set
     call comb_next(done,7,ncomp,iarray)
     !
     tlamda=initry(iarray)
-    ! obtain tithn
+    ! Obtain tithn
     call targfunc(tlamda,ncomp,tim,sig,targtol,&
                   typ,ntim,tvalue,tithn,targErr)
-    ! call lmfit if targErr=0
+    !
     if(targErr==0) then
       lmpars=(/tithn,tlamda/)
-      call lmfit(tim,sig,ntim,lmpars,2*ncomp,typ,&
-                 lmStdpars,lmpredtval,lmvalue,lmtol,lmErr)
-      ! reset pars, stdpars, predtval and value if lmErr=1
-      if(lmErr==1) then
-        pars=lmpars
-        Stdpars=lmStdpars
-        predtval=lmpredtval
-        value=lmvalue
-        ! successful simple trails 
-        errorflag=0
-      end if
-      ! if parameters' standard errors can not be estimated, save it too
-      if(errorflag/=0 .and. (lmErr==4 .or. lmErr==5 .or. lmErr==6)) then
-        cpars=lmpars
-        cStdpars=lmStdpars
-        cpredtval=lmpredtval
-        cvalue=lmvalue
-        errorflag=-1
-      end if
-      ! exit if a successful simple tries has been achieved
-      if(errorflag==0) exit Loop
+    else 
+      lmpars(1:ncomp)=100000.0D+00
+      lmpars(ncomp+1:)=tlamda
     end if
+    call lmfit(tim,sig,ntim,lmpars,2*ncomp,typ,transf,&
+               lmStdpars,lmpredtval,lmvalue,lmtol,lmErr)
+    ! Set pars, stdpars, predtval and value if possible
+    if(lmErr==1) then
+      pars=lmpars
+      Stdpars=lmStdpars
+      predtval=lmpredtval
+      value=lmvalue
+      ! Successful simple trails given errorflag=0 
+      errorflag=0
+    end if
+    ! If parameters' standard errors can not be estimated, save it too
+    if((lmErr==4 .or. lmErr==5 .or. lmErr==6) .and. lmvalue<minvalue) then
+      cpars=lmpars
+      cStdpars=lmStdpars
+      cpredtval=lmpredtval
+      cvalue=lmvalue
+      minvalue=lmvalue
+      ! Set saving to be true
+      saving=.true.
+    end if
+    ! Exit if at least one successful simple tries has been achieved
+    if(errorflag==0) exit Loop
   end do Loop
-  ! if errorflag=0, then return values will be areadly 
-  ! saved, else return values need to be reset
+  ! If errorflag=0, then return values will be areadly 
+  ! saved, or else return values need to be resetted
   if(errorflag/=0) then
-    if(errorflag==-1) then
-      ! return a situation that Std.pars can not obtained
+    if(saving .eqv. .true.) then
+      ! Return a solution that Std.pars can not obtained
       pars=cpars
-      Stdpars=cStdpars
+      Stdpars=-99.0D+00
       predtval=cpredtval
       value=cvalue
-    else if(errorflag==1) then
-      ! return a situation that is totally not possible
+    else if(saving .eqv. .false.) then
+      ! Return a solution that is totally not possible
+      ! if simple trials are failures
       pars=    -99.0D+00
       Stdpars= -99.0D+00
       predtval=-99.0D+00
       value=   -99.0D+00
     end if
   end if
-  ! now return
+  ! Whether transform a[i] to a[i]/b[i] or not ?
+  if(transf .eqv. .true.) then
+    ! Need not to transform the solution that pars=-99.0D+00 !!!
+    if(all(pars>0.0D+00)) pars(1:ncomp)=pars(1:ncomp)/pars(ncomp+1:)
+  end if
   return
 end subroutine fitlm

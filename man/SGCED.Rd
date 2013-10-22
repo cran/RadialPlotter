@@ -5,13 +5,13 @@
 Fitting dose-response curve and calculating equivalent dose using standardised growth curves (SGC) method
 }
 \description{
-Its a wrapped version of function "calED", fitting OSL dose-response curve and calculating equivalent dose values using standardised growth curves (SGC) method after Roberts HM and Duller GAT (2004), the error of equivalent doses are estimated after Duller GAT (2007). It is based on the fact that using information collected as part of standard SAR measurements, it is possible to construct reproducible patterns of growth from multiple-grain aliquots of a large number of samples (Roberts HM and Duller GAT, 2004).
+Its a wrapped version of function calED(), fitting OSL dose-response curve and calculating equivalent dose values using standardised growth curves (SGC) method after Roberts HM and Duller GAT (2004), the errors of equivalent doses are estimated after Duller GAT (2007). It is based on the fact that using information collected as part of standard SAR measurements, it is possible to construct reproducible patterns of growth from multiple-grain aliquots of a large number of samples (Roberts HM and Duller GAT, 2004).
 }
 \usage{
 sgcED(Curvedata, Ltx, 
       model = c("line","exp","line+exp"), origin = FALSE,
       nstart = 100, upb = 1, ErrorMethod = c("mc","sp"),
-      MCiter = 1000, plot = TRUE, samplename = NULL, outfile = NULL)
+      nsim = 1000, plot = TRUE, samplename = NULL, outfile = NULL)
 }
 \arguments{
   \item{Curvedata}{\link{data.frame}(\bold{required}): three columns, the same as that in function \link{calED}
@@ -26,25 +26,24 @@ sgcED(Curvedata, Ltx,
 }
   \item{upb}{\link{numeric}(with default): upper boundary of b value, initial b values will be generated uniformly from (0, upb), the same as that in function \link{calED}
 }
-  \item{ErrorMethod}{\link{character}(with default): method ("sp" or "mc") for estimating the standard errors of equivalent doses, 
-see \link{calED} for more information
+  \item{ErrorMethod}{\link{character}(with default): method ("sp" or "mc") for estimating the standard errors of equivalent doses, see \link{calED} for more information
 }
-  \item{MCiter}{\link{numeric}(with default): maximum iterative number if using Monte Carlo method for error assessing
+  \item{nsim}{\link{numeric}(with default): maximum simulative number allowed if using Monte Carlo method for error assessing
 }
   \item{plot}{\link{logical}(with default): whether drawing a plot or not
 }
   \item{samplename}{\link{character}(optional): name of the sample
 }
-  \item{outfile}{\link{character}(optional): if specified, calculated equivalent dose values will be written to a file of name
-outfile in .csv format}
+  \item{outfile}{\link{character}(optional): if specified, calculated equivalent doses will be written to a file of name outfile in .csv format and saved to the current work directory
+}
 }
 \details{
-see function \link{calED} for details.
+see function \link{calED}() for details.
 }
 \value{
   Return a visible list that contains following elements:
   \item{LMpars}{characteristic parameters and standard errors of the dose-response curve obtained by Levenberg-Marquardt method}
-  \item{residual}{square of the total residual error}
+  \item{residual}{sum of square of residual errors}
   \item{fit.value}{observations .VS. fitted values}
   \item{ED}{estimated equivalent doses (standard errors)}
 }
@@ -63,9 +62,6 @@ Long, H., Lai, Z.P., Fan, Q.S., Sun, Y.J., Liu, X.J., 2010. Applicability of a q
 400 Gy for lacustrine sediments from the Qaidam Basin of the Qinghai-Tibetan Plateau. Quaternary Geochronology 5(2-3), pp. 212-217.
 
 Yang, L.H., Lai, Z.P., Long, H., Zhang, J.R., 2011. Construction of a quartz OSL standardised growth curve (SGC) for aeolian samples from the Horqin dunefield in northeastern China. Geochronometria 38(4), pp. 391-396.
-}
-\author{
-Peng Jun, email<pengjun10@mails.ucas.ac.cn>
 }
 \seealso{
   \link{calED}

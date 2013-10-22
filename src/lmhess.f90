@@ -1,26 +1,38 @@
 subroutine lmhess(pars,xdat,ydat,npars,ndat,tol,minAbsPar,&
                   hessian,gradient,value,errorflag,model)
-!--------------------------------------------------------------------------------------------------
-! subroutine fdhessian is used to calculate the gradient, hessian matrix of a 
+!------------------------------------------------------------------------------------------------------
+! Subroutine fdhessian() is used to calculate the gradient, hessian matrix of a 
 ! given function contained in its inner, that is fun34 in CW-OSL fitting models, 
 ! using finite-difference approximation (non-origin and origin, cw, lm)
+! ====================================================================================================
 !
-! pars(npars)          :: input, real values, the parameters of the function
-! xdat (ndat)          :: input, real values, the xdat values 
-! ydat (ndat)          :: input, real values, the ydat values
-! npars                :: input, integer, the length of tim ( or signal)
-! ndat                 :: input, integer, the dimension of the parameters 
-! tol                  :: input, real value, tolerance value for diagnosing sigular matrix
-! minAbspar            :: input, real value, the allowed minimum absolute parameter 
-! hessian(npars,npars) :: output, real values, the hessian matrix
-! gradient(npars)      :: output, real values, the gradient of the parameters
-! value                :: output, real value, the correspond function value for the specified parameters 
+! pars(npars)          :: input, real values, the parameters of the function.
+!
+! xdat (ndat)          :: input, real values, the xdat values.
+!
+! ydat (ndat)          :: input, real values, the ydat values.
+!
+! npars                :: input, integer, the length of tim ( or signal).
+!
+! ndat                 :: input, integer, the dimension of the parameters.
+!
+! tol                  :: input, real value, tolerance value for diagnosing sigular matrix.
+!
+! minAbspar            :: input, real value, the allowed minimum absolute parameter.
+!
+! hessian(npars,npars) :: output, real values, the hessian matrix.
+!
+! gradient(npars)      :: output, real values, the gradient of the parameters.
+!
+! value                :: output, real value, the correspond function value for the specified parameters.
+! 
 ! errorflag(5)         :: output, integer values, error message generated during the calling:
 !                         1) if subroutine GJordan is called sucessfully, errorflag(1)=0, otherwise 1;
 !                         2) if function value can be calculated,         errorflag(2)=0, otherwise 1;
 !                         3) if gradient can be calculated,               errorflag(3)=0, otherwise 1; 
 !                         4) if hessian can be calculated,                errorflag(4)=0, otherwise 1; 
-!                         5) if no error appears in arrary allocation,    errorflag(5)=0, otherwise 1
+!                         5) if no error appears in arrary allocation,    errorflag(5)=0, otherwise 1.
+!
 ! model                :: input, integer, a model to be used for approximation:
 !                         1) y=I(1)*exp(-lamda(1)*x)+
 !                              I(2)*exp(-lamda(2)*x)+...+
@@ -32,24 +44,24 @@ subroutine lmhess(pars,xdat,ydat,npars,ndat,tol,minAbsPar,&
 !
 !                         4) y=a*(1-exp(-b*x)+c*x+d, fitting exponential plus linear grow curve
 !
-!                         5) y=a1*b1*(x/max(x))*exp(-b1*x^2)/2/max(x))+
-!                              a2*b2*(x/max(x))*exp(-b2*x^2)/2/max(x))+...+
-!                              ak*bk*(x/max(x))*exp(-bk*x^2)/2/max(x)), fitting a 'lm' signal curve
+!                         5) y=a1*(x/max(x))*exp(-b1*x^2)/2/max(x))+
+!                              a2*(x/max(x))*exp(-b2*x^2)/2/max(x))+...+
+!                              ak*(x/max(x))*exp(-bk*x^2)/2/max(x)), fitting a 'lm' signal curve
 !
 !                         6) y=a*x, fitting linear grow curve (origin)
 ! 
 !                         7) y=a*(1-exp(-b*x)), fitting exponential grow curve (origin)
 !
 !                         8) y=a*(1-exp(-b*x)+c*x, fitting exponential plus linear grow curve (origin)
+! ======================================================================================================
+! Dependence:: subroutine GJordan, inter function fun34=
 !
-! Dependence:: subroutine GJordan, inter function fun34
-!
-! Author:: Peng Jun, 2013.05.21, revised in 2013.05.23, revised in 2013.07.24
+! Author:: Peng Jun, 2013.05.21, revised in 2013.05.23, revised in 2013.07.24=
 !
 ! Reference:  Jose Pinheiro, Douglas Bates, Saikat DebRoy, Deepayan Sarkar and the
 !             R Development Core Team (2013). nlme: Linear and Nonlinear Mixed
 !             Effects Models. R package version 3.1-108.
-!--------------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------------
   implicit none
   integer(kind=4),intent(in)::npars                 
   integer(kind=4),intent(in)::ndat 
@@ -83,10 +95,10 @@ subroutine lmhess(pars,xdat,ydat,npars,ndat,tol,minAbsPar,&
   ! is smaller than minabspar, the incr will
   ! be decided through this check
   do i=1,npars
-    if(abs(pars(i))<=minAbsPar)  then
+    if(dabs(pars(i))<=minAbsPar)  then
       incr(i)=minAbsPar*eps
     else
-      incr(i)=abs(pars(i))*eps
+      incr(i)=dabs(pars(i))*eps
     end if
   end do
   !
@@ -320,7 +332,7 @@ subroutine lmhess(pars,xdat,ydat,npars,ndat,tol,minAbsPar,&
         maxx=maxval(xdat)
         fvec=0.0D+00
         do k=1,npars/2
-          fvec=fvec+x(k)*x(k+npars/2)*(xdat/maxx)*&
+          fvec=fvec+x(k)*(xdat/maxx)*&
                dexp(-x(k+npars/2)*xdat**2/2.0D+00/maxx)  
         end do
       else if(model>=6 .and. model<=8) then
@@ -338,7 +350,7 @@ subroutine lmhess(pars,xdat,ydat,npars,ndat,tol,minAbsPar,&
           fvec=cx(1)*(1.0D+00-dexp(-cx(2)*xdat))+cx(3)*xdat
         end if
       end if
-      fun34=sqrt(sum((fvec-ydat)**2))
+      fun34=dsqrt(sum((fvec-ydat)**2))
       return
     end function fun34
 end subroutine lmhess

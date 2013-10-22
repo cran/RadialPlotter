@@ -1,21 +1,27 @@
 function fmin(ax,bx,tol,ltx,cpars,npars)
 !------------------------------------------------------------------------------------------------
-! an approximation  x  to the point where  f  attains a minimum  on
-! the interval  (ax,bx)  is determined.
-! the method used is a combination of  golden  section  search  and
+! Approximation x to the point where a given function attains a minimum value on the interval 
+! (ax,bx)  is determined. The method used is a combination of  golden  section  search  and
 ! successive parabolic interpolation. 
+! ===============================================================================================
 !
-! ax, input:: real value, left endpoint of initial interval
-! bx, input:: real value, right endpoint of initial interval
-! tol, input:: real value, desired length of the interval of uncertainty of the final result
-! ltx, input:: real value, standardlised OSL signal from which equivalent dose to be calculated
-! cpars(4), input:: real values, characteristic parameters of the dose-response curve
-! npars, input:: integer, dimension of the fitting model
-! fmin, output:: real value, calculated equivalent dose correspond to ltx
+! ax,       input:: real value, left endpoint of initial interval.
 !
-! Author:: Peng Jun, 2013.06.22
+! bx,       input:: real value, right endpoint of initial interval.
 !
-! Dependence:: inner function line; inner function exper; inner function linexp
+! tol,      input:: real value, desired length of the interval of uncertainty of the final result.
+!
+! ltx,      input:: real value, standardlised OSL signal from which equivalent dose to be calculated.
+!
+! cpars(4), input:: real values, characteristic parameters of the dose-response curve.
+!
+! npars,    input:: integer, dimension of the fitting model.
+!
+! fmin,    output:: real value, calculated equivalent dose correspond to ltx.
+! ================================================================================================
+! Author:: Peng Jun, 2013.06.22.
+!
+! Dependence:: inner function line; inner function exper; inner function linexp.
 !
 ! Reference:: http://www.netlib.org/fmm/fmin.f
 !-------------------------------------------------------------------------------------------------
@@ -25,12 +31,12 @@ function fmin(ax,bx,tol,ltx,cpars,npars)
   real   (kind=8),dimension(4)::cpars
   real   (kind=8)::ltx
   real   (kind=8)::fmin
-  ! local variables
+  ! Local variables
   real   (kind=8):: a,b,c,d,e,eps,xm,p,q,&
                     r,tol1,tol2,u,v,w
   real   (kind=8):: fu,fv,fw,fx,x
   !
-  ! squared inverse of the golden ratio
+  ! Squared inverse of the golden ratio
   c=0.5D+00*(3.0D+00-dsqrt(5.0d+00))
   !
   ! eps is approximately the square root of 
@@ -41,7 +47,7 @@ function fmin(ax,bx,tol,ltx,cpars,npars)
      if(tol1 .gt. 1.0D+00) goto 10
      eps=dsqrt(eps)
   !
-  ! initialization
+  ! Initialization
   a=ax 
   b=bx
   v=a+c*(b-a)
@@ -49,7 +55,7 @@ function fmin(ax,bx,tol,ltx,cpars,npars)
   x=v
   e=0.0D+00
   !
-  ! calculate a model dependent fx
+  ! Calculate a model dependent fx
   if(npars==2)  then
     fx=line(x)
   else if(npars==3) then
@@ -60,18 +66,18 @@ function fmin(ax,bx,tol,ltx,cpars,npars)
   fv=fx
   fw=fx
   !
-  ! main iterations
+  ! Main iterations
   20 xm=0.5D+00*(a+b)
      tol1=eps*dabs(x)+tol/3.0D+00
      tol2=2.0D+00*tol1
   !
-  ! check converge (90)
+  ! Check converge (90)
   if(dabs(x-xm) .le. (tol2-0.5D+00*(b-a)) ) goto 90
   !
-  ! check if golden-section is necessary (40)
+  ! Check if golden-section is necessary (40)
   if(dabs(e).le. tol1) goto 40
   !
-  ! fit parabola
+  ! Fit parabola
   r=(x-w)*(fx-fv)
   q=(x-v)*(fx-fw)
   p=(x-v)*q-(x-w)*r
@@ -81,30 +87,30 @@ function fmin(ax,bx,tol,ltx,cpars,npars)
   r=e
   e=d
   !
-  ! check if parabola can be accepted
+  ! Check if parabola can be accepted
   30 if(dabs(p) .ge. dabs(0.5D+00*q*r) ) goto 40
      if(p .le. q*(a-x)) goto 40
      if(p .ge. q*(b-x)) goto 40
   !
-  ! parabolic interpolation
+  ! Parabolic interpolation
   d=p/q
   u=x+d
   !
-  ! check if targeted function value f(x) is too
-  ! close to ax or bx
+  ! Check if targeted function value f(x) 
+  ! is too close to ax or bx
   if( (u-a) .lt. tol2) d=dsign(tol1,xm-x)
   if( (b-u) .lt. tol2) d=dsign(tol1,xm-x)
   goto 50
   !
-  ! golden-section step
+  ! Golden-section step
   40 if(x .ge. xm) e=a-x
      if(x .lt. xm) e=b-x
      d=c*e
   !
-  ! check if f(x) is too close to x
+  ! Check if f(x) is too close to x
   50 if(dabs(d) .ge. tol1) u=x+d
      if(dabs(d) .lt. tol1) u=x+dsign(tol1,d)
-  ! calculate a model dependent fu
+  ! Calculate a model dependent fu
   if(npars==2) then
     fu=line(u)
   else if(npars==3) then
@@ -113,7 +119,7 @@ function fmin(ax,bx,tol,ltx,cpars,npars)
     fu=linexp(u)
   end if
   !
-  ! update a, v, v, w, x
+  ! Update a, v, v, w, x
   if(fu .gt. fx) goto 60
   if(u .ge. x) a=x
   if(u .lt. x) b=x
@@ -150,7 +156,7 @@ function fmin(ax,bx,tol,ltx,cpars,npars)
   contains
   ! ***************
   ! 
-  ! 1) linear function y=a*x+b
+  ! 1) Linear function y=a*x+b
   function line(x)
     implicit none
     real(kind=8)::line,x

@@ -1,10 +1,11 @@
 subroutine sort(ary,n)
 !--------------------------------------------------------------
-! simple sort, sorting ary in descending order
+! simple sort, sorting ary in descending order.
+! =============================================================
+! ary(n), input/output:: real values, an arrary to be sorted.
 !
-! ary(n), input/output:: real values, an arrary to be sorted
-! n, input:: integer:: numbers of elements in ary
-!
+! n,             input:: integer:: numbers of elements in ary.
+! =============================================================
 ! Author:: Peng Jun, 2013.05.20
 !
 ! Dependence:: No

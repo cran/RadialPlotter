@@ -1,63 +1,73 @@
 subroutine MamED(ED,Error,nED,pars,spars,value,npars,&
                  sigma,maxiter,tol,bound,message)
-!-------------------------------------------------------------------------------------------------
-! MamED attempts to estimate the values of the parameters in Minimum Age Models
+!--------------------------------------------------------------------------------------------------------------------------
+! MamED() attempts to estimate the values of the parameters in Minimum Age Models
 ! by using the L-BFGS-B method, insteading for a globle minimum, the L-BFGS-B routine
 ! results in a local minimum, and sometimes even end with nonsense, suggesting what
 ! a ill-condition problem is the mimimum age models! 
 ! The results rely strongly on the initial guess values, but in this subroutine, by
 ! adjusting the sigma, converge can be achieved in most situations.
 ! Note that this subroutine do logged equivalent dose analysis, which means that all the
-! ED data must be larger than 0
+! equivalent dose data must be larger than 0.
+! =========================================================================================================================
+! ED(nED), input            :: real values, the equivalent dose, must be of un-logged.
 !
-! ED(nED), input            :: real values, the equivalent dose, must be of un-logged 
-! Error(nED), input         :: real values, the associated absolute errors for the equivalent dose
-! nED, input                :: integer, the size of the ED data
-! npars, input              :: integer,the dimension of the problems, 3 for MAM3, 4 for MAM4
-! pars(npars), input/output :: real values, the estimated parameters
-! spars(npars), output      :: real values, the estimated standard errors for parameters
-! value , output            :: real value, the estimated minus logged maximum logged likelihood value
-! sigma, input              :: real value, the added spread to the ED data
-! maxiter, input            :: integer, the allowed maximum iterative numbers
-! tol, input                :: real value, the allowed maximum tolerance for the hessian to be non-sigular
-! bound(2,npars), input     :: real values, the low and up boundary for L-BFGS-B method
-! message(5)                :: integer values, the error message generated in the analysis:
-!                              1) message(1) is about gradient estimation in l-bfgs-b using subroutine gradient,
-!                                 if fails return 1, else 0
-!                              2) message(2) is about subroutine fdhessian, if hessian matrix can be approximated 
-!                                 and inversed, message(2) gives 0, else 1;
-!                              3) message(3) is about parameters' standard errors, if they can be approximated, 
-!                                 0 will be given, otherwise 1;
-!                              4) message(4) is about the boundary, if any estimated parameter is near the boundary, 
-!                                 1 will returns, otherwise 0;
-!                              5) message(5) is about the comparision between gama and mu for MAM4, if gama>mu, 1 will return, 
-!                                 otherwise 0.
-!                              
-! Author :: Peng Jun, 2013.03.15, revised in 2013.04.01
+! Error(nED), input         :: real values, the associated absolute errors for the equivalent dose.
+!
+! nED, input                :: integer, the size of the equivalent dose data.
+!
+! npars, input              :: integer,the dimension of the problems, 3 for MAM3, 4 for MAM4.
+!
+! pars(npars), input/output :: real values, the estimated parameters.
+!
+! spars(npars), output      :: real values, the estimated standard errors for parameters.
+!
+! value , output            :: real value, the estimated minus logged maximum logged likelihood value.
+!
+! sigma, input              :: real value, the added spread to the equivalent data.
+!
+! maxiter, input            :: integer, the allowed maximum iterative numbers.
+!
+! tol, input                :: real value, the allowed maximum tolerance for the hessian to be non-sigular.
+!
+! bound(2,npars), input     :: real values, the low and up boundary for L-BFGS-B method.
+!
+! message(5),output         :: integer values, the error message generated in the analysis:
+!                              1.1) if gradient estimation in l-bfgs-b using subroutine gradient() success, message(1)=0;
+!                              1.2) if gradient estimation in l-bfgs-b using subroutine gradient() fail, message(1)=1;
+!                              2.1) if hessian matrix can be approximated and inversed, message(2)=0;
+!                              2.2) if hessian matrix can not be approximated and inversed, message(2)=1;
+!                              3.1) if parameters' standard errors can be approximated, message(3)=0;
+!                              3.2) if parameters' standard errors can not be approximated, message(3)=1;
+!                              4.1) if no estimated parameter is near the boundary, message(4)=0;
+!                              4.2) if any estimated parameter is near the boundary, message(4)=1;
+!                              5.1) if for MAM4, estimated value gama<=mu, message(5)=0;
+!                              5.2) if for MAM4, estimated value gama>mu, message(5)=1.
+! =============================================================================================================================                           
+! Author :: Peng Jun, 2013.03.15, revised in 2013.04.01.
 ! 
 ! Reference :: Galbraith, R.F., Roberts, R.G., Laslett, G.M., Yoshida, H. & Olley, J.M., 1999. Optical dating of
 !              single grains of quartz from Jinmium rock shelter, northern Australia. Part I: experimental design
 !              and statistical models. Archaeometry, 41, pp. 339-364.
 !
 ! Dependence :: subroutine setulb; subroutine fdhessian; subroutine gradient;
-!               subroutine inverse; subroutine diag 
-!
-!-----------------------------------------------------------------------------------------------------------
+!               subroutine inverse; subroutine diag.
+!------------------------------------------------------------------------------------------------------------------------------
   implicit none
-  integer(kind=4),intent(in)::nED
-  integer(kind=4),intent(in)::npars
-  integer(kind=4),intent(in)::maxiter
-  real   (kind=8),intent(in)::tol
-  real   (kind=8),intent(in)::sigma
-  real   (kind=8),intent(out)::value
-  integer(kind=4),dimension(5),intent(out)::message
-  real   (kind=8),dimension(nED),intent(in)::ED
-  real   (kind=8),dimension(nED),intent(in)::Error
-  real   (kind=8),dimension(npars),intent(inout)::pars
-  real   (kind=8),dimension(npars),intent(out)::spars
+  integer(kind=4),                   intent(in)::nED
+  integer(kind=4),                   intent(in)::npars
+  integer(kind=4),                   intent(in)::maxiter
+  real   (kind=8),                   intent(in)::tol
+  real   (kind=8),                   intent(in)::sigma
   real   (kind=8),dimension(2,npars),intent(in)::bound
+  real   (kind=8),dimension(nED),    intent(in)::ED
+  real   (kind=8),dimension(nED),    intent(in)::Error
+  real   (kind=8),                   intent(out)::value
+  integer(kind=4),dimension(5),      intent(out)::message
+  real   (kind=8),dimension(npars),  intent(inout)::pars
+  real   (kind=8),dimension(npars),  intent(out)::spars
   !
-  ! variables for subroutine setulb
+  ! Variables for subroutine setulb
   integer(kind=4),parameter::m=5, iprint=-1
   real   (kind=8),parameter::factr=1.0D+07, pgtol=0.0D+00
   logical,dimension(4)::lsave
@@ -68,33 +78,33 @@ subroutine MamED(ED,Error,nED,pars,spars,value,npars,&
                     wa(2*m*npars+5*npars+11*m*m+8*m) 
   character(len=60)::task,csave 
   !
-  ! variables for subroutine fdhessian
+  ! Variables for subroutine fdhessian
   real   (kind=8),parameter::minAbsPar=0.0D+00     
   real   (kind=8)::grad(npars)
   real   (kind=8)::hessian(npars,npars)
   integer(kind=4)::errorflag(4)
   !
-  ! local variables for subroutine gradient
+  ! Local variables for subroutine gradient
   integer(kind=4),parameter::iter=6
   integer(kind=4)::failure
   !
-  ! local variables for subroutine inverse
+  ! Local variables for subroutine inverse
   integer(kind=4)::ifault
   !
-  ! local variables 
+  ! Local variables 
   real   (kind=8)::sED(nED),sError(nED) 
   !
-  ! transform ED data to log-scale and add spread sigma value
-  sError=sqrt((Error/ED)**2+sigma**2)
-  sED=log(ED)
+  ! Transform ED data to log-scale and add spread sigma value
+  sError=dsqrt((Error/ED)**2+sigma**2)
+  sED=dlog(ED)
   !
-  ! set bounds on the pars
+  ! Set bounds on the pars
   nbd(1:npars)=2
   !
   l=bound(1,:)
   u=bound(2,:)
   !
-  ! start do optimizing using L-BFGS-B method
+  ! Start do optimizing using L-BFGS-B method
   task='START'
   spars=0.0D+00
   message=0
@@ -102,11 +112,11 @@ subroutine MamED(ED,Error,nED,pars,spars,value,npars,&
   100 continue
   call setulb(npars,m,pars,l,u,nbd,f,g,factr,pgtol,wa,iwa,task,iprint, &
               csave,lsave,isave,dsave)
-  ! check if the maximum iteration has been reached
+  ! Check if the maximum iteration has been reached
   if(isave(30)==maxiter)  goto 200
   !
   if (task(1:2) .eq. 'FG') then
-    ! now provide the gradient and value for the
+    ! Now provide the gradient and value for the
     ! problem to be optimized
     call gradient(pars,sED,sError,npars,iter,&
                   nED,grad,value,failure)
@@ -137,39 +147,39 @@ subroutine MamED(ED,Error,nED,pars,spars,value,npars,&
     goto 100
     !
   end if
-  ! at this point the optimization is over
+  ! At this point the optimization is over
   200 continue
   !
-  ! estimate the standard errors of parameters
+  ! Estimate the standard errors of parameters
   call fdhessian(pars,sED,sError,npars,nED,tol, &
                  minAbsPar,hessian,grad,value,errorflag)
-  ! check if error appears during the approximation
+  ! Check if error appears during the approximation
   if(any(errorflag/=0))   then
     message(2)=1
     return
   end if
-  ! now inverse the hessian matrix to estimate the
+  ! Now inverse the hessian matrix to estimate the
   ! standard errors for calculated parameters 
   call inverse(hessian,npars,ifault,tol)
-  ! check if error presents during inversing
+  ! Check if error presents during inversing
   message(2)=ifault
   if(message(2)==1)  return
   !
-  ! extract diagnal elements of the 
+  ! Extract diagnal elements of the 
   ! inversed hessian matrix
   call diag(hessian,npars,spars)
   !
-  ! check if any diagnal elment of inversed hessian is below zero
+  ! Check if any diagnal elment of inversed hessian is below zero
   if(any(spars<0.0D+00))  message(3)=1
   if(message(3)==1)  return
   ! 
-  spars=sqrt(spars)
+  spars=dsqrt(spars)
   !
-  !check if any parameter is near the boundary
-  if (any(abs(pars-l)<1.0D-04) .or. &
-      any(abs(pars-u)<1.0D-04)  )  message(4)=1
+  ! Check if any parameter is near the boundary
+  if (any(dabs(pars-l)<1.0D-04) .or. &
+      any(dabs(pars-u)<1.0D-04)  )  message(4)=1
   !
-  !check if gama>mu in MAM4 with four parameters
+  ! Check if gama>mu in MAM4 with four parameters
   if( npars==4 .and. &
       pars(2)>pars(3) )  message(5)=1
   ! 

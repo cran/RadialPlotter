@@ -1,11 +1,11 @@
 subroutine pnorm(x,n,upper)
 !-----------------------------------------------------------------
-! a wrapper subroutine calls function alnorm to calculate a series
+! A wrapper subroutine calls function alnorm to calculate a series
 ! culmulative probability densities of the normal distribution
-! 
-! Author :: Peng Jun
+! ===============================================================
+! Author :: Peng Jun.
 !
-! Dependence: function alnorm
+! Dependence: function alnorm.
 !-----------------------------------------------------------------
   implicit none
   integer(kind=4),intent(in)::n

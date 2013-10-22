@@ -25,8 +25,8 @@ Peng, J., Han, F.Q., 2013. Selections of fast-component OSL signal using sedimen
   data(EDdata)
 # plot a probability density curve 
   x<-EDdata$gl11
-  plot(density(x[,1], weights=x[,2]/sum(x[,2])),col='blue',
-       main='Sample.Tengger',xlab='De(Gy)',ylab='Density')
+  plot(density(x[,1], weights=x[,2]/sum(x[,2])),col="blue",
+       main="Sample.Tengger",xlab="De(Gy)",ylab="Density")
 }
 \keyword{package RadialPlotter}
 \keyword{OSL dating}

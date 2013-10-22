@@ -1,26 +1,35 @@
 subroutine lmfunc(xdat,ydat,m,n,x,fvec,fjac,ldfjac,iflag)
-! ----------------------------------------------------------------------------------------------------------------------------
+! ---------------------------------------------------------------------------------------------------------------------------
 ! For formula I(t)=a1*exp(-b1*t)+a2*exp(-b2*t)+...+ak*exp(-bk*t), K=1:7,
 ! lmfunc is used to calculate vectors fevc(i)=I(t,i)-ydat(i), i=1:length(ydat), 
 ! so is the jacobian matrix fjac, they will be passed to subroutine lmfit
 ! to perform the Levenberg-Marquadt optimization.
+! ===========================================================================================================================
 !
 ! m,                   input:: integer, length of xdat or ydat.
+!
 ! n,                   input:: integer, dimension of the problem (length of x).
+!
 ! ldfjac,              input:: integer,the leading dimension of FJAC, which must be no less than m.
+!
 ! xdat(m),             input:: real values, times values.
+!
 ! ydat(m),             input:: real values, signal values.
+!
 ! x(n),                input:: real values, initial guess values.
+!
 ! fvec(m),            output:: real values, differences between predicted values and obeserved values.
-! fjac(ldfjac,n),     output:: real values, the jacobian matrix
+!
+! fjac(ldfjac,n),     output:: real values, the jacobian matrix.
+!
 ! iflag,               input:: integer, If IFLAG = 1 on intput, FCN should calculate the functions at X and return 
 !                              this vector in FVEC. If IFLAG = 2 on input, FCN should calculate the jacobian at X and
 !                              return this matrix in FJAC. To terminate the algorithm, the user may set IFLAG negative.
-!
-! Author:: Peng Jun, 2013.05.21
+! ===========================================================================================================================
+! Author:: Peng Jun, 2013.05.21.
 !
 ! Dependence:: No
-!-----------------------------------------------------------------------------------------------------------------------------
+!----------------------------------------------------------------------------------------------------------------------------
   implicit none
   integer(kind=4),intent(in)::m
   integer(kind=4),intent(in)::n

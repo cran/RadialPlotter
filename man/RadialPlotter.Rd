@@ -27,12 +27,11 @@ RadialPlotter(EDdata,
   \item{maxiter}{\link{numeric}(with default): the maximum iterative number allowed in optimization. For central age model and finite mixture age model, often a maximum iterative number of 300 to 500 will be enough in most cases, while in some special situations, 1000 or more will be needed. As to minimum age model, a maximum iterative number of 50 to 100 will be totally enough
 }
   \item{maxcomp}{\link{numeric}(with default): the maximum number of components allowed for fitting finite mixture age model, the up limitation
-is set to be equal to the length of EDdata, but it will be both time consuming and make no sense if it is set to be too large. It does not exert any effect if minimum age model or central age model is used
+is set to be equal to the length of EDdata, but it will be both time consuming and make no sense if it is set to be too large. It does not exert any effect if minimum age model or central age model is analyzed
 }
-  \item{algorithm}{\link{character}(with default): the algorithm for optimizing minimum age models, available algorithms are "lbfgsb" and
-"port", default algorithms="lbfgsb"
+  \item{algorithm}{\link{character}(with default): the algorithm for optimizing minimum age models, available algorithms are "lbfgsb" and "port", default algorithms="lbfgsb"
 }
-  \item{eps}{\link{numeric}(with default): the maximum tolerance allowed for stopping the iterative process when performing central age model or finite mixture age model analysis, iterative process will stop if updated parameters satisfying ||pars-newpars||<=eps. It does not exert any effect if minimum age model is used
+  \item{eps}{\link{numeric}(with default): the maximum tolerance allowed for stopping the iterative process when performing central age model or finite mixture age model analysis, iterative process will stop if updated parameters satisfying ||pars-newpars||<=eps. It does not exert any effect if minimum age model is analyzed
 }
   \item{plot}{\link{logical}(with default): whether drawing the radial plot using estimated parameters or not
 }
@@ -44,7 +43,7 @@ is set to be equal to the length of EDdata, but it will be both time consuming a
 }
   \item{zscale}{\link{numeric}(optional): option for modifying the z-scale of radial plot manually. Example: \code{zscale = seq(min(EDdata),max(EDdata), by = 3L)}
 }
-  \item{samplename}{\link{character}(optional): the name of the sample that used for optimizing, such as "Tengger"
+  \item{samplename}{\link{character}(optional): the name of the sample, such as "Tengger"
 }
 }
 \details{
@@ -52,20 +51,20 @@ Specifying a number of components that not smaller than 2, this function will fi
 \cr
 Because both maximum likelihood method and L-BFGS-B algorithm (so is the "port" routine) find out optimized parameters that correspond to a local minimum value instead of a globle minimum value, hence to achieve an acceptable estimation, all routines (except central age model) try various initial values then picking out optimized parameters that given the minimum minus logged likelihood value.\cr
 \cr
-When fitting minimum age models (of type 3 or type 4), the low and up boundaries are set as following:\cr
+When fitting minimum age models (of type 3 or type 4), the lower and upper boundaries are set as following:\cr
 \cr
-low boundary for type 3: (p=1e-4, gama=min(ED), sigma=1e-3);\cr
- up boundary for type 3: (p=0.99, gama=max(ED), sigma=5).\cr
-low boundary for type 4: (p=1e-4, gama=min(ED), mu=min(ED), sigma=1e-3);\cr
- up boundary for type 4: (p=0.99, gama=max(ED), mu=max(ED), sigma=5).\cr
+lower boundary for type 3: (p=1e-4, gama=min(ED), sigma=1e-3);\cr
+upper boundary for type 3: (p=0.99, gama=max(ED), sigma=5).\cr
+lower boundary for type 4: (p=1e-4, gama=min(ED), mu=min(ED), sigma=1e-3);\cr
+upper boundary for type 4: (p=0.99, gama=max(ED), mu=max(ED), sigma=5).\cr
 \cr 
-Also note that, for minimum age model, if parameters' standard error can not be estimated, the result will be suppressed. For minimum age
-model with four parameters, if the optimization gives gama value that larger than mu value, the result will be suppressed too.
+Also note that, for both finite mixture age model and minimum age model, if parameters' standard error can not be estimated, the result will be suppressed. For minimum age
+model with four parameters, if the optimization gives a gama value which is larger than the mu value, the result will be suppressed too.
 }
 \value{
-Return aradial plot, and an invisible list of class "RadialPlotter" that contains following elements:
+Return a radial plot, and an invisible list of S3 class "RadialPlotter" that contains following elements:
 
-  \item{errorflag}{ error message generated during the fitting, 0 indicates a successful work for analyzed statistical age models. For finite mixture age model, 1 implicates that the covariance matrix is singular or the diagonal position of the inversed covariance matrix have at least one minus value, resulting in failure when the routine attempting to estimate corresponded standard errors of optimized parameters. For minimum age model, 1 indicates at least one estimated parameter is near the boundary, or at least one parameters' standard error can not be estimated, or estimated  gama value larger than mu value (for type 4), which might attribute to using of an inappropriate addsigma value or an inappropriate number of parameters (type 3 or type 4) for the sample of interest. As to central age model, a successful work will not be a problem 
+  \item{errorflag}{error message generated during the fitting, 0 indicates a successful work for analyzed statistical age models. For finite mixture age model, 1 implicates that at least one parameter's standard error can not be approximated. For minimum age model, 1 indicates at least one estimated parameter is near the boundary, or at least one parameter's standard error can not be approximated, or estimated gama value is larger than mu value (for type 4), which might attribute to using of an inappropriate addsigma value or an inappropriate number of parameters (type 3 or type 4) for the sample of interest. As to central age model, a successful work will not be a problem 
 }
   \item{commonED}{the equivalent dose and corresponded standard error calculated using common age model}
   \item{ncomp}{the number of components used for optimizing}
@@ -111,11 +110,7 @@ Vermeesch, P., 2009. RadialPlotter: a Java application for fission track, lumine
 44 (4), pp. 409-410.
 }
 
-\author{
-Peng Jun, email<pengjun10@mails.ucas.ac.cn>
-}
-
-\note{The original S code for drawing radial plot is written by Rex Galbraith and is transformed to R code by Sebastian Kreutzer. The code for drawing radial plot in this package is modified from package 'Luminescence' written by Sebastian Kreutzer et al (2012). I thank Rex Galbraith for his permission to modify and bundle the code to this function. \cr
+\note{The original S code for drawing radial plot is written by Rex Galbraith and is transformed to R code by Sebastian Kreutzer. The code for drawing radial plot in this package is modified from package "Luminescence" written by Sebastian Kreutzer et al (2012). I thank Rex Galbraith for his permission to modify and bundle the code to this function. \cr
 \cr
 I also thank Silke Schmidt for providing published OSL data (Silke Schmidt et al, 2012) for checking and testing this function.
 }
@@ -138,7 +133,7 @@ I also thank Silke Schmidt for providing published OSL data (Silke Schmidt et al
   obj
 # In a radical but not advisable case, one may set maxcomp to be the largest 
 # looping number of components that allowed
-  obj<-RadialPlotter(EDdata$gl11,maxcomp=35,samplename='GL11',zscale=seq(20,37,3))
+  obj<-RadialPlotter(EDdata$gl11,maxcomp=35,samplename="GL11",zscale=seq(20,37,3))
   unclass(obj)
 # Setting zscale manually
   zscale<-seq(min(EDdata$al3[,1])-1,max(EDdata$al3[,1])+1,by = 15L)
@@ -153,7 +148,7 @@ I also thank Silke Schmidt for providing published OSL data (Silke Schmidt et al
 # Performing minimum age model analysis with four parameters
   obj<-RadialPlotter(EDdata$al3,ncomp=-2,maxiter=100,zscale=seq(24,93,7),psize=2)
   unclass(obj)
-# For the sample of interest, too larger addsigma value might be inappropriate 
+# For the sample of interest, too larger a addsigma value might be inappropriate 
 # and will result in an error
   obj<-RadialPlotter(EDdata$gl11,ncomp=-2,addsigma=0.2,maxiter=100,plot=FALSE)
   print(obj)

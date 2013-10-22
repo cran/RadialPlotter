@@ -1,21 +1,23 @@
 subroutine NonReplaceSample(TotalSample,WantedSample,TotalSampleSize,WantedSampleSize)
-!---------------------------------------------------------------------------
-! NonReplaceSample is a subroutine used to do sampling without replace employing 
-! the mothod of Green
+!-----------------------------------------------------------------------------------------
+! NonReplaceSample() is a subroutine used to do sampling without replace employing 
+! the mothod of Bert and Green (1977).
+! ========================================================================================
+! TotalSample::       Input, the total samples which a subsample generate from.
 !
-! TotalSample::       Input, the total samples which a subsample generate from
-! WantedSample::      Output, the wanted subsample which generates from the TotalSample
-! TotalSampleSize::   Input, the size of the TotalSample
-! WantedSampleSize::  Input, the size of the WantedSample
+! WantedSample::      Output, the wanted subsample which generates from the TotalSample.
 !
-! Author:: Peng Jun, 2012.12.26
+! TotalSampleSize::   Input, the size of the TotalSample.
+!
+! WantedSampleSize::  Input, the size of the WantedSample.
+! ========================================================================================
+! Author:: Peng Jun, 2012.12.26.
 !
 ! Reference:: Bert F and Green JR, 1977. Fortran subroutines for random sampling without 
 !             replacement. Behavior Research Methodt and Instrumentation, pp 559.
 !
 ! Dependence:: No
-!
-!---------------------------------------------------------------------------
+!-----------------------------------------------------------------------------------------
   implicit none
   integer(kind=4),intent(in)::TotalSampleSize
   integer(kind=4),intent(in)::WantedSampleSize
@@ -45,5 +47,5 @@ subroutine NonReplaceSample(TotalSample,WantedSample,TotalSampleSize,WantedSampl
     end if 
     !
   end do
-  !
+  return
 end subroutine NonReplaceSample

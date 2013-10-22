@@ -5,15 +5,14 @@
 Decomposition decay curve in optically stimulated luminescence (OSL) dating
 }
 \description{
-Function "decomp" decomposes the OSL decay curve (type "CW" and "LM") to a specified number of components.
+Function decomp() decomposes the OSL decay curve (type "CW" or "LM") to a specified number of components.
 }
 \usage{
 decomp(Sigdata, 
        ncomp = 3, typ = c("cw","lm"),
-       LEDpower = 60, LEDwavelength = 470, 
-       plot = TRUE, xlog= TRUE, xylim = NULL,
-       lwd = 1, samplename = NULL, outfile = NULL,
-       control.args = list())
+       control.args = list(), transf = FALSE, 
+       LEDpower = 60, LEDwavelength = 470, plot = TRUE,
+       xlog= TRUE, lwd = 3, samplename = NULL, outfile = NULL)
 }
 
 \arguments{
@@ -23,48 +22,50 @@ decomp(Sigdata,
 }
   \item{typ}{\link{character}(with default): type ("cw" or "lm") of the OSL decay curve, default typ="cw"
 }
+  \item{control.args}{\link{list}(with default): further arguments used in differential evolution algorithm, see details
+}
+  \item{transf}{\link{logical}(with default): whether transform estimated parameters or not, see details
+}
   \item{LEDpower}{\link{numeric}(with default): LED power (mW/cm2) used for intensity ramping during the measurement
 }
   \item{LEDwavelength}{\link{numeric}(with default): LED wavelength (nm) used for stimulation during the measurement
 }
-  \item{plot}{\link{logical}(with default): whether plot the results or not
+  \item{plot}{\link{logical}(with default): whether plot the fitted results or not
 }
-  \item{xlog}{\link{logical}(with default): tansform x-axis to log-scale or not
+  \item{xlog}{\link{logical}(with default): tansform x-axis to log-scale for plotting or not
 }
-  \item{xylim}{\link{numeric}(with default): upper limitation of x and y values used for plotting
-}
-  \item{lwd}{\link{numeric}(with default): the width of curves if plot=TRUE
+  \item{lwd}{\link{numeric}(with default): the width of curves for plotting
 }
   \item{samplename}{\link{character}(optional): name of the sample
 }
-  \item{outfile}{\link{character}(optional): if specified, decomposed signal values will be written to a file of name
-outfile in .csv format and saved to the current work directory.
-}
-  \item{control.args}{\link{list}(with default): further arguments used in differential evolution algorithm, see details
+  \item{outfile}{\link{character}(optional): if specified, decomposed signal values will be written to a file of name outfile in .csv format and saved to the current work directory
 }
 }
 \details{
 This function decomposes OSL decay curve to a specified number of components using a combination of differential evolution and
 Levenberg-Marquardt algorithm. Both OSL decay curve of type "CW" and "LM" can be decomposed.\cr
 For OSL decay curve of type "CW", the fitting model (accroding to Bluszcz and Adamiec, 2006) is:\cr\cr
-I(t)=a1*exp(-b1*t)+a2*exp(-b2*t)+...+ak*exp(-bk*t) , k=1, 2, ..., 7\cr\cr
-where I(t) is the luminescence intensity as a function of time(t), a is the number of trapped electrons, b is the detrapping rates. Initial parameters are estimated using the differential evolution method suggested by Bluszcz A and Adamiec G (2006), then Levenberg-Marquardt algorithm (minpack: original FORTRAN 77 version by Jorge More, Burton Garbow, Kenneth Hillstrom. FORTRAN 90 version by John Burkardt) will be performed to obtain a final optimization. In some radical cases, differential evolution will fail in parameter initializing, or Levenberg-Marquardt algorithm may fails, then a serise of simple attempts will be carryed out using Levenberg-Marquardt algorithm. Arguments (control.args) that employed to control the performance differential evolution algorithm are:\cr\cr
-\bold{factor}: used for control the number of parents (NP), np=factor*ncomp, 5 to 10 times the number of components is preferable, default factor=10; \cr
+I(t)=a1*exp(-b1*t)+a2*exp(-b2*t)+...+ak*exp(-bk*t) , k=1, 2, ..., 7, which is identical to:\cr\cr
+I(t)=a1*b1*exp(-b1*t)+a2*b2*exp(-b2*t)+...+ak*bk*exp(-bk*t) , k=1, 2, ..., 7 if "transf" is setted to be TRUE.\cr\cr
+where I(t) is the luminescence intensity as a function of time(t), a is the number of trapped electrons, b is the detrapping rates. Initial parameters are estimated using the differential evolution method suggested by Bluszcz A and Adamiec G (2006), then Levenberg-Marquardt algorithm (minpack: original FORTRAN 77 version by Jorge More, Burton Garbow, Kenneth Hillstrom. FORTRAN 90 version by John Burkardt) will be performed to obtain a final optimization. In some radical cases, differential evolution will fail in parameter initializing, or Levenberg-Marquardt algorithm may fails, then a serise of simple attempts will be carryed out using Levenberg-Marquardt algorithm. Arguments (control.args) that employed to control the performance of differential evolution algorithm are:\cr\cr
+\bold{factor}: used for control the number of parents (NP), np=factor*ncomp, default factor=15; \cr
 \bold{f}: weighting factor, ranging from 0 to 1.2, default f=0.5; \cr
 \bold{cr}: crossover constant, ranging from 0 to 1, default cr=0.99; \cr
 \bold{maxiter}: the maximum iterative number allowed, default maxiter=1e3; \cr
 \bold{tol}: a tolerance for stopping the iteration, if magnitude of all standard deviations of parameters within the whole population are smaller than tol, the iteration will be terminated. default tol=0.1 \cr\cr
 
 For OSL decay curve of type "LM", the fitting model (accroding to Bulur E, 2000) is:\cr\cr
+I(t)=a1*(t/P)*exp(-b1*t^2/(2*P))+a2*(t/P)*exp(-b2*t^2/(2*P))+...+\cr
+ak*(t/P)*exp(-bk*t^2/(2*P)) , k=1, 2, ..., 7, which is identical to:\cr\cr
 I(t)=a1*b1*(t/P)*exp(-b1*t^2/(2*P))+a2*b2*(t/P)*exp(-b2*t^2/(2*P))+...+\cr
-ak*bk*(t/P)*exp(-bk*t^2/(2*P)) , k=1, 2, ..., 7 \cr\cr
+ak*bk*(t/P)*exp(-bk*t^2/(2*P)) , k=1, 2, ..., 7 if "transf" is setted to be TRUE\cr\cr
 where I(t) is the luminescence intensity as a function of time(t), P is the total stimulation time, a is the number of trapped electrons, b is the detrapping rates. Initial detrapping rates are estimated using the detrapping values described after Jain et al. (2003). Possible combinations of detrapping rates for a given component are calculated using permutation and combinations. For example, if ncomp=3, then the possible number of combinations is C(3,7)=35. Then for each combination that contains three detrapping rates, the correspond number of trapped electrons can be coarsely obtained using Linear Algebra method outlined by Bluszcz A (1996). Then the Levenberg-Marquardt algorithm will be used to optimize the finial result.\cr\cr
 }
 \value{
 Return an invisible list containing following elements:\cr
   \item{Comp.Signal}{fitted values for observations as well as for each component}
   \item{pars}{estimated parameters and associated standard errors}
-  \item{value}{square of the total residual error}
+  \item{value}{sum of square of residual errors}
   \item{errorflag}{error message generated during the calculation, if parameters' standard errors can be estimated, errorflag=0, else 1}
 }
 \references{
@@ -82,14 +83,13 @@ Jorge, M., Burton, G., Kenneth, H., 1980. User Guide for MINPACK-1, Technical Re
 
 \bold{Further reading} 
 
+Adamiec, G., 2005. OSL decay curves-relationship between single- and multiple-grain aliquots. Radiation Measurements, 39, pp.63-75.
+
 Choi, J.H., Duller G.A.T., Wintle, A.G., 2006. Analysis of quartz LM-OSL curves. Ancient TL, 24, pp. 9-20.
 
 }
-\author{
-Peng Jun, email<pengjun10@mails.ucas.ac.cn>
-}
-\note{Both LEDpower and LEDwavelength are used for determining the absolute photoionisation cross section, hence to achieve desirable results
-for a sample of interest, making sure correct LEDpower and LEDwavelength have been employed.\cr\cr
+
+\note{Both LEDpower and LEDwavelength are used for determining the absolute photoionisation cross section. However, the estimated absolute photoionisation cross section (pcs) may not so reliable as it seems to be, because both LEDpower and LEDwavelength will vary with the age of the instrument.\cr\cr
 For fitting OSL decay curve of type "CW", in most cases, parameters can be initialized by differential evolution method, but sometimes Levenberg-Marquardt algorithm fails to obtain a final optimization (that's exactly the truth as the increasing of the number of components, which might indicate overcharging of the model), if this happened, parameters initialized with differential evolution method will be regarded as the final estimation.\cr\cr
 I thank Andrzej Bluszcz, who helps me a lot during the writting of this function. Jeong-Heon Chio is thanked for providing published data (Chio et al, 2006) to test this routine.
 }
@@ -98,13 +98,13 @@ I thank Andrzej Bluszcz, who helps me a lot during the writting of this function
  # loading signal data
  data(Signaldata)
  # decompose OSL signal of type "CW" to 3 components
- res<-decomp(Signaldata$cw,ncomp=3,typ="cw",xlog=FALSE,xylim=c(5,1000),lwd=2,samplename="GL1")
+ res<-decomp(Signaldata$cw,ncomp=3,typ="cw",xlog=FALSE,samplename="GL1")
  res 
  # reset factor, maxiter and decompose signal to 5 components
- res<-decomp(Signaldata$cw,ncomp=5,xylim=c(5,1000),lwd=2,control.args=list(factor=9,maxiter=500))
+ res<-decomp(Signaldata$cw,ncomp=5,control.args=list(factor=10,maxiter=500))
  print(res)
  # decompose OSL signal of type "LM" to 5 components
- res<-decomp(Signaldata$lm,ncomp=5,typ="lm",lwd=2)
+ res<-decomp(Signaldata$lm,ncomp=5,typ="lm")
  print(res)
 }
 

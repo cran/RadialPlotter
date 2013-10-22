@@ -1,26 +1,33 @@
 subroutine interpolate2(Dose,ltx,pars,npars,lowb,upb,value)
 !-------------------------------------------------------------------------------------------------------------------
-! interpolate is a subroutine used for interpolating a Dose value from a Dose-Response Curve (origin)
-!
-! npars,        input:: integer, length of parameters (1, or 2, or 3)
-! pars(npars),  input:: real values, characteristic values for a Dose-Response curve
-! Dose,        output:: real value, calculated Dose value
-! value,       output:: real value, a minimized object
-! ltx,          input:: real value, the standardlized signal value from which a Dose is to be estimated
-! lowb,         input:: rea lvalue, low boundary of a interval from which the interpolation to take place
-! upb,          input:: real value, up boundary of a interval from which the interpolation to take place
+! interpolate2() is a subroutine used for interpolating a Dose value from a Dose-Response Curve (origin).
+! ==================================================================================================================
 ! 
-! Author:: Peng Jun, 2013.09.20
+! npars,        input:: integer, length of parameters (1, or 2, or 3).
 !
-! Dependence:: function fmin2
+! pars(npars),  input:: real values, characteristic values for a Dose-Response curve.
+!
+! Dose,        output:: real value, calculated equivalent dose value.
+!
+! value,       output:: real value, a minimized object value.
+!
+! ltx,          input:: real value, the standardlized signal value from which a Dose is to be estimated.
+!
+! lowb,         input:: rea lvalue, low boundary of a interval from which the interpolation to take place.
+!
+! upb,          input:: real value, up boundary of a interval from which the interpolation to take place.
+! ==================================================================================================================
+! Author:: Peng Jun, 2013.09.20.
+!
+! Dependence:: function fmin2.
 !--------------------------------------------------------------------------------------------------------------------
   implicit none
-  integer(kind=4),intent(in)::npars
-  real   (kind=8),intent(out)::Dose
-  real   (kind=8),intent(out)::value
-  real   (kind=8),intent(in)::ltx
-  real   (kind=8),intent(in)::lowb,upb
+  integer(kind=4),                 intent(in)::npars
+  real   (kind=8),                 intent(in)::ltx
+  real   (kind=8),                 intent(in)::lowb,upb
   real   (kind=8),dimension(npars),intent(in)::pars
+  real   (kind=8),                 intent(out)::Dose
+  real   (kind=8),                 intent(out)::value
   !
   ! local variables
   real   (kind=8),parameter::gtol=1.490116e-08  ! .Machine$double.eps^0.5 in R

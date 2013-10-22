@@ -1,21 +1,19 @@
 subroutine diag(a,n,b)
  !------------------------------------------------------------------------
- ! subroutine diag is used to extract the diag
- ! elements of matrix A
- ! 
+ ! subroutine diag is used to extract the diag elements of matrix A
+ ! =======================================================================
  ! A(n,n)  :: input, real values, a matrix
  !   n     :: input, integer value, the dimension of A
  !  b(N)   :: output, real values, the diag elements of A
- !
+ ! =======================================================================
  ! Dependency:: no
  !
  ! Author :: Peng Jun, 2013.01.28
- !
  !------------------------------------------------------------------------
    implicit none
    integer(kind=4),intent(in)::n
-   real(kind=8),intent(in)::a(n,n)
-   real(kind=8),intent(out)::b(n)
+   real(kind=8),   intent(in)::a(n,n)
+   real(kind=8),   intent(out)::b(n)
    ! local variables
    integer(kind=4)::i
    !

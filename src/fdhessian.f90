@@ -1,42 +1,53 @@
 subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar,&
                      hessian,gradient,value,errorflag)
-!--------------------------------------------------------------------------------------------------
-! subroutine fdhessian is used to calculate the gradient, hessian matrix of a 
-! given function contained in its inner, that is fun34 in MAM models, using 
-! finite-difference approximation
+!-------------------------------------------------------------------------------------------------------------------------
+! Subroutine fdhessian() is used to calculate the value, gradient, hessian matrix of a given function contained 
+! in its inner, i.e. fun34 of mimnimum age models, using finite-difference approximation.
+! ========================================================================================================================
 !
-! pars(npars)          :: input, real values, the parameters of the function
-! ED (nED)             :: input, real values, the log-scale OSL ED values 
-! error(nED)           :: input, real values, the OSL ED's absolute error
-! npars                :: input, integer, the size of ED data
-! nED                  :: input, integer, the dimension of the parameters 
-! tol                  :: input, real value, tolerance value for diagnosing sigular matrix
-! minAbspar            :: input, real value, the allowed minimum absolute parameter 
-! hessian(npars,npars) :: output, real values, the hessian matrix
-! gradient(npars)      :: output, real values, the gradient of the parameters
-! value                :: output, real value, the correspond function value for the specified parameters 
-! errorflag(3)         :: output, integer values, error message :
-!                         1) if value can be calculated, errorflag(1)=0, otherwise 1;
-!                         2) if gradient can be calculated, errorflag(2)=0, otherwise 1; 
-!                         3) if hessian can be calculated, errorflag(3)=0, otherwise 1; 
-!                         4) if any error appears in dynamic array allocation, errorflag(4) will be 1, else 0.  
-!                            but if sigular matrix appears when attempt to call subroutine GJordan to approximate 
-!                            value, gradient and hessian, all values in errorflag will be 1
+! pars(npars)          :: input, real values, the parameters of a given function.
 !
-! Dependency:: subroutine GJordan, inter function fun34
+! ED (nED)             :: input, real values, the log-scale equivalent dose values.
 !
-! Author:: Peng Jun, 2013.01.27, revised in 2013.03.17, revised again in 2013.04.21, last revised in 2013.06.09
+! error(nED)           :: input, real values, the equivalent doses' relative errors.
+!
+! npars                :: input, integer, the dimension of the parameters.
+!
+! nED                  :: input, integer, the size of equivalent dose data.
+!
+! tol                  :: input, real value, tolerance value for diagnosing a sigular matrix.
+!
+! minAbspar            :: input, real value, the allowed minimum absolute step used for finite-difference approximation.
+!
+! hessian(npars,npars) :: output, real values, the approximated hessian matrix.
+!
+! gradient(npars)      :: output, real values, the gradient of the given function at the specified parameters.
+!
+! value                :: output, real value, the correspond function value at the specified parameters.
+! 
+! errorflag(4)         :: output, integer values, error message generated during the calculation:
+!                         1.1) if function value can be calculated, errorflag(1)=0;
+!                         1.2) if function value can not be calculated, errorflag(1)=1;
+!                         2.1) if gradient can be calculated, errorflag(2)=0;
+!                         2.2) if gradient can not be calculated, errorflag(2)=1; 
+!                         3.1) if hessian maxtrix can be calculated, errorflag(3)=0;
+!                         3.2) if hessian maxtrix can not be calculated, errorflag(3)=1; 
+!                         4.1) if no error appears in dynamic array allocation, errorflag(4)=0;
+!                         4.2) if any error appears in dynamic array allocation, errorflag(4)=1;
+!                              But note that if sigular matrix appears when attempt to call subroutine GJordan to approximate
+!                              value, gradient and hessian matrix of the given function, all values in errorflag will be 1
+! ============================================================================================================================
+! Dependence:: subroutine GJordan, inter function fun34.
+!
+! Author:: Peng Jun, 2013.01.27, revised in 2013.03.17, revised again in 2013.04.21, last revised in 2013.06.09.
 !
 ! Reference:  Jose Pinheiro, Douglas Bates, Saikat DebRoy, Deepayan Sarkar and the
 !             R Development Core Team (2013). nlme: Linear and Nonlinear Mixed
 !             Effects Models. R package version 3.1-108.
-
-!
-!--------------------------------------------------------------------------------------------------
+!-----------------------------------------------------------------------------------------------------------------------------
   implicit none
   integer(kind=4),intent(in)::npars                 
-  integer(kind=4),intent(in)::nED                    
-  integer(kind=4),intent(out)::errorflag(4)             
+  integer(kind=4),intent(in)::nED                                
   real   (kind=8),intent(in)::pars(npars)            
   real   (kind=8),intent(in)::ED(nED)                
   real   (kind=8),intent(in)::Error(nED)            
@@ -44,7 +55,8 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar,&
   real   (kind=8),intent(in)::minAbsPar              
   real   (kind=8),intent(out)::gradient(npars)       
   real   (kind=8),intent(out)::hessian(npars,npars)  
-  real   (kind=8),intent(out)::value                
+  real   (kind=8),intent(out)::value    
+  integer(kind=4),intent(out)::errorflag(4)             
   ! local variables
   integer(kind=4)::i,j,p
   integer(kind=4)::ncols
@@ -64,10 +76,10 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar,&
   ! is smaller than minabspar, the incr will
   ! be decided through this check
   do i=1,npars
-    if( abs(pars(i))<=minAbsPar )  then
+    if(dabs(pars(i))<=minAbsPar)  then
       incr(i)=minAbsPar*eps
     else
-      incr(i)=abs(pars(i))*eps
+      incr(i)=dabs(pars(i))*eps
     end if
   end do
   !
@@ -271,20 +283,19 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar,&
 !----------------------
   function fun34(x)
   !------------------------------------------------------------------------------------------------------------
-  ! fun34 is a inner function contained in subroutine hessian its used for calculating minus 
-  ! logged maximum likelihood value of minimum age model of three or four parameters 
+  ! fun34() is a inner function contained in subroutine hessian, its used for calculating minus 
+  ! logged maximum likelihood value of minimum age model with three or four parameters.
   !
   ! x(npars), input     :: real values, the parameters used for calculating
   ! fun34,   output     :: real value, the value for the specified function
   !
-  !  Author :: Peng Jun, 2013.03.16
+  !  Author :: Peng Jun, 2013.03.16.
   !
   ! Reference:: Galbraith, R.F., Roberts, R.G., Laslett, G.M., Yoshida, H. & Olley, J.M., 1999. Optical dating of
   !             single grains of quartz from Jinmium rock shelter, northern Australia. Part I: experimental design
   !             and statistical models. Archaeometry, 41, pp. 339-364.
   !
-  ! Dependence:: subroutine pnorm, function alnorm, also the ED data (log-scale) provided in subroutine hessian
-  !
+  ! Dependence:: subroutine pnorm; function alnorm; also the ED data (log-scale) provided in subroutine hessian.
   !--------------------------------------------------------------------------------------------------------------
     implicit none
     real(kind=8)::x(npars)
@@ -296,21 +307,21 @@ subroutine fdhessian(pars,ED,Error,npars,nED,tol,minAbsPar,&
     !
     if (npars==3)    then
       !
-      pnorm1=(x(2)-(x(2)/x(3)**2+ED/Error**2)/(1.0D+00/x(3)**2+1.0D+00/Error**2))*sqrt(1.0D+00/Error**2+1.0D+00/x(3)**2)
+      pnorm1=(x(2)-(x(2)/x(3)**2+ED/Error**2)/(1.0D+00/x(3)**2+1.0D+00/Error**2))*dsqrt(1.0D+00/Error**2+1.0D+00/x(3)**2)
       !
       call pnorm(pnorm1,nED,upper)
       !
-      fun34=-sum(log(x(1)/sqrt(2.0D+00*pi*Error**2)*exp(-(ED-x(2))**2/(2.0D+00*Error**2))+&
-	        (1.0D+00-x(1))/sqrt(2.0D+00*pi*(Error**2+x(3)**2))*exp(-(ED-x(2))**2/(2.0D+00*(Error**2+x(3)**2)))*&
+      fun34=-sum(dlog(x(1)/dsqrt(2.0D+00*pi*Error**2)*dexp(-(ED-x(2))**2/(2.0D+00*Error**2))+&
+	        (1.0D+00-x(1))/dsqrt(2.0D+00*pi*(Error**2+x(3)**2))*dexp(-(ED-x(2))**2/(2.0D+00*(Error**2+x(3)**2)))*&
 	        (1.0D+00-pnorm1)/(0.5D+00)))  
     elseif(npars==4)  then
       !
-      pnorm1=(x(2)-(x(3)/x(4)**2+ED/Error**2)/(1.0D+00/x(4)**2+1.0D+00/Error**2))*sqrt(1.0D+00/Error**2+1.0D+00/x(4)**2)
+      pnorm1=(x(2)-(x(3)/x(4)**2+ED/Error**2)/(1.0D+00/x(4)**2+1.0D+00/Error**2))*dsqrt(1.0D+00/Error**2+1.0D+00/x(4)**2)
       !
       call pnorm(pnorm1,nED,upper)	 
       !
-      fun34=-sum(log(x(1)/sqrt(2.0D+00*pi*Error**2)*exp(-(ED-x(2))**2/(2.0D+00*Error**2))+&
-	        (1.0D+00-x(1))/sqrt(2.0D+00*pi*(Error**2+x(4)**2))*exp(-(ED-x(3))**2/(2.0D+00*(Error**2+x(4)**2)))*&
+      fun34=-sum(dlog(x(1)/dsqrt(2.0D+00*pi*Error**2)*dexp(-(ED-x(2))**2/(2.0D+00*Error**2))+&
+	        (1.0D+00-x(1))/dsqrt(2.0D+00*pi*(Error**2+x(4)**2))*dexp(-(ED-x(3))**2/(2.0D+00*(Error**2+x(4)**2)))*&
 	        (1.0D+00-pnorm1)/(1.0D+00-alnorm((x(2)-x(3))/x(4),upper))))   
       ! 
     end if

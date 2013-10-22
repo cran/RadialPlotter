@@ -1,61 +1,78 @@
 subroutine sgcED(Dose,ltx,ndose,ninltx,inltx,outDose,pars,npars,predtval,&
                  upb,nstart,parserrors,value,method,motoiter,errorflag)
-!-------------------------------------------------------------------------------------------------------------------------------
-! Calculate equivalent dose values using Standardised growth curves (SGC) method 
+!-------------------------------------------------------------------------------------------------------------------------------------------
+! Calculate equivalent dose values using Standardised growth curves (SGC) method. (Non-otigin).
+! ==========================================================================================================================================
 !
-! ndose,               input:: integer, length of reDoses (Redose1, Redose2,...) or Ltx(Lx1/Tx1, Lx2/Tx2,...)
-! ninltx,              input:: integer, number of standardlised OSL signal values from which to calculate EDs
-! nstart,              input:: integer, number of random trials
-! upb,                 input:: real value, upper boundary for b value, b is generated in (0, upb)
+! ndose,               input:: integer, length of reDoses (Redose1, Redose2,...) or Ltx(Lx1/Tx1, Lx2/Tx2,...).
+!
+! ninltx,              input:: integer, number of standardlised OSL signal values from which to calculate equivalent doses.
+!
+! nstart,              input:: integer, number of random trials.
+! upb,                 input:: real value, upper boundary for b value, b is generated uniformly in (0, upb).
+!
 ! npars,               input:: integer, model used for fitting the dose-response curve:
-!                              if npars=2, a linear model of the form: y=ax+b will be fitted, where ndat>=2
-!                              if npars=3, a Exponential model of the form: y=a(1-exp(-bx))+c  will be fitted, where ndat>=3
-!                              if npars=4, a linear+Exponential model of the form: y=a(1-exp(-bx))+cx+d will be fitted, where ndat>=4
-! dose(ndose),         input:: real values, Redose data used to build a dose-response curve
-! ltx(ndose,2),        input:: real values, standardlized OSL signal data used to build a dose-response curve
-! inltx(ninltx,2),     input:: real values, standardlized OSL signal values that used for calculating EDs and standard errors
-! outDose(ninltx,2),  output:: real values, calculated EDs and standard errors that correlated to standardlized OSL signal
-! pars(npars),        output:: real values, calculated characteristical parameters of a dose-response curve
-! parserrors(npars),  output:: real values, parameters' standard errors
-! predtval(ndose),    output:: real values, fitted values that correspond to ltx
-! value,              output:: real value, sum of the square of residual
-! motoiter,            input:: integer, numbers of Moto Carlo simulations that using to estimate EDs' standard errors
-! method,              input:: integer, method for calculating EDs' standard error, 1 for simple method; 2 for Moto Carlo method
+!                              if npars=2, a linear model of the form: y=ax+b will be fitted, where ndat>=2;
+!                              if npars=3, a Exponential model of the form: y=a(1-exp(-bx))+c  will be fitted, where ndat>=3;
+!                              if npars=4, a linear+Exponential model of the form: y=a(1-exp(-bx))+cx+d will be fitted, where ndat>=4.
+!
+! dose(ndose),         input:: real values, Redose data used to build a dose-response curve.
+!
+! ltx(ndose,2),        input:: real values, standardlized OSL signal data used to build a dose-response curve.
+!
+! inltx(ninltx,2),     input:: real values, standardlized OSL signal values that used for calculating EDs and standard errors.
+!
+! outDose(ninltx,2),  output:: real values, calculated EDs and standard errors that correlated to standardlized OSL signal.
+!
+! pars(npars),        output:: real values, calculated characteristical parameters of a dose-response curve.
+!
+! parserrors(npars),  output:: real values, parameters' standard errors.
+!
+! predtval(ndose),    output:: real values, fitted values that correspond to ltx.
+!
+! value,              output:: real value, sum of the square of residual.
+!
+! motoiter,            input:: integer, numbers of Moto Carlo simulations that using to estimate EDs' standard errors.
+!
+! method,              input:: integer, method for calculating EDs' standard error, 1 for simple method; 2 for Moto Carlo method.
+!
 ! errorflag(2),       output:: integer, error message generated when calling subroutine SGC:
-!                              1) error appears when calling subroutine lmder1, errorflag(1) will be one in (0,4,5,6,7,8,9,10), 
-!                                 else errorflag(1)=123; error appears when calling linearfit, errorflag(1) will be 0, else 123
-!                              2) error appears when attempt to calculate parameters' standard errors, errorflag(2)=1, else
-!                                 errorflag(2) will be 0
+!                              1.1) if no error appears when calling linearfit() or lmfit1() to estimate parameters, errorflag(1)=123;
+!                              1.2) if error appears when calling lmfit1() to estimate parameters, errorflag(1) will be one in (0,4,5,6,7,8,9,10);
+!                              1.3) if error appears when calling linearfit() to estimate parameters, errorflag(1) will be 1;
+!                              2.1) if no error appears when calling linearfit() or lmfit1() to estimate parameters' std.error, errorflag(2)=0;
+!                              2.2) if error appears when calling linearfit() or lmfit1() to estimate parameters' std.error, errorflag(2)=1.
+! =================================================================================================================================================
+! Author:: Peng Jun, 2013.08.01, revised in 2013.08.04, revised in 2013.09.21.
 !
-! Author:: Peng Jun, 2013.08.01, revised in 2013.08.04, revised in 2013.09.21
-!
-! Dependence:: subroutine inipars; subroutine lmfit1; subroutine interpolate; subroutine linearfit; subroutine r8vec_normal
+! Dependence:: subroutine inipars; subroutine lmfit1; subroutine interpolate; subroutine linearfit; subroutine r8vec_normal.
 !
 ! References:: Roberts,H.M. and Duller,G.A.T., 2004. Standardised growth curves for optical dating of sediment
 !              using multiple-grain aliquots. Radiation Measurements 38, pp. 241-252.
 !
 !              Duller, G.A.T., 2007. Assessing the error on equivalent dose estimates derived from single aliquot
 !              regenerative dose measurements. Ancient TL 25, pp. 15-24.
-!----------------------------------------------------------------------------------------------------------------------------------
+!---------------------------------------------------------------------------------------------------------------------------------------------------
   implicit none
-  integer(kind=4),intent(in)::ndose
-  integer(kind=4),intent(in)::npars
-  integer(kind=4),intent(in)::ninltx
-  integer(kind=4),intent(in)::motoiter
-  integer(kind=4),intent(in)::method
-  integer(kind=4),intent(in)::nstart
-  real   (kind=8),intent(in)::upb
-  real   (kind=8),intent(out)::value
-  integer(kind=4),intent(out)::errorflag(2)
-  real   (kind=8),dimension(ndose),intent(in)::Dose
-  real   (kind=8),dimension(ndose,2),intent(in)::ltx
+  integer(kind=4),                    intent(in)::ndose
+  integer(kind=4),                    intent(in)::npars
+  integer(kind=4),                    intent(in)::ninltx
+  integer(kind=4),                    intent(in)::motoiter
+  integer(kind=4),                    intent(in)::method
+  integer(kind=4),                    intent(in)::nstart
+  real   (kind=8),                    intent(in)::upb
+  real   (kind=8),dimension(ndose),   intent(in)::Dose
+  real   (kind=8),dimension(ndose,2), intent(in)::ltx
   real   (kind=8),dimension(ninltx,2),intent(in)::inltx
+  real   (kind=8),                    intent(out)::value
+  integer(kind=4),                    intent(out)::errorflag(2)
   real   (kind=8),dimension(ninltx,2),intent(out)::outDose
-  real   (kind=8),dimension(npars),intent(out)::pars
-  real   (kind=8),dimension(npars),intent(out)::parserrors
-  real   (kind=8),dimension(ndose),intent(out)::predtval
-  ! local variables
+  real   (kind=8),dimension(npars),   intent(out)::pars
+  real   (kind=8),dimension(npars),   intent(out)::parserrors
+  real   (kind=8),dimension(ndose),   intent(out)::predtval
+  ! Local variables
   real   (kind=8),parameter::lmtol=1.0D-07
+  real   (kind=8),parameter::initol=1.0D-09
   real   (kind=8)::maxDose,minvalue
   real   (kind=8),dimension(1)::rand
   integer(kind=4),dimension(2)::info
@@ -76,17 +93,17 @@ subroutine sgcED(Dose,ltx,ndose,ninltx,inltx,outDose,pars,npars,predtval,&
   real   (kind=8),dimension(ndose)::lmpredtval
   integer(kind=4),dimension(2)::lmerrorflag
   real   (kind=8)::bvalue, lmvalue, itervalue
-  ! default return values if any error appears
+  ! Default return values if any error appears
   outDose=-99.0D+00
   value=-99.0D+00
   pars=-99.0D+00
   parserrors=-99.0D+00
   predtval=-99.0D+00
-  ! initialize errorflag
+  ! Initialize errorflag
   errorflag(1)=0
   errorflag(2)=1
   if(npars==2) then  ! for linear model
-    ! call linearfit to get the characterized parameters for Dose-Response 
+    ! Call linearfit() to get the characterized parameters for Dose-Response 
     ! curve, return lmpars, lmparserrors,lmpredtval,lmvalue,lmerrorflag
     call linearfit(Dose,ltx(:,1),ndose,lmpars,npars,&
                    .true.,lmparserrors,lmpredtval,&
@@ -104,8 +121,8 @@ subroutine sgcED(Dose,ltx,ndose,ninltx,inltx,outDose,pars,npars,predtval,&
       call random_number(rand)
       bvalue=upb*rand(1)
       call inipars(bvalue,npars,ndose,dose,&
-                   ltx(:,1),outpars,lmtol,info)
-      ! error checking
+                   ltx(:,1),outpars,initol,info)
+      ! Error checking
       if(info(1)==0 .and. info(2)==0) then
         cpars(1)=outpars(1)
         cpars(2)=bvalue
@@ -113,13 +130,13 @@ subroutine sgcED(Dose,ltx,ndose,ninltx,inltx,outDose,pars,npars,predtval,&
         lmpars=cpars(1:npars)
       end if
       if(info(1)/=0 .or. info(2)/=0) cycle loop
-      ! call lmfit1 to get the characterized parameters for dose-response 
+      ! Call lmfit1() to get the characterized parameters for dose-response 
       ! curve, return lmpars, lmparserrors, lmpredtval, lmvalue, lmerrorflag
       call lmfit1(Dose,ltx(:,1),ndose,lmpars,npars,&
                   .true.,lmparserrors,lmpredtval,&
                   lmvalue,lmtol,lmerrorflag) 
-      ! error checking
-      ! store improved values only
+      ! Error checking
+      ! Store improved values only
       if(lmerrorflag(1)==123 .and. lmvalue<itervalue) then
         itervalue=lmvalue
         pars=lmpars
@@ -130,51 +147,51 @@ subroutine sgcED(Dose,ltx,ndose,ninltx,inltx,outDose,pars,npars,predtval,&
       end if
     end do loop
   end if
-  ! error checking, if linearfit or lmfit1 fails, return
+  ! Error checking, if linearfit or lmfit1 fails, return
   if(errorflag(1)/=123) return
-  ! calculate ED values corresponding to inltx
+  ! Calculate ED values corresponding to inltx
   maxDose=maxval(Dose)
   do i=1,ninltx
     call interpolate(outDose(i,1),inltx(i,1),pars,npars,&
                      0.0D+00,maxDose*1.1D+00,minvalue)
   end do
-  ! calculate standard errors of ED values
+  ! Calculate standard errors of ED values
   if(method==1) then
-    ! 1) method 1, simple transformation
+    ! 1) Method 1, simple transformation
     averageErr=value/real(ndose,kind=8)
     lowltx=inltx(:,1)-sqrt((inltx(:,2))**2+averageErr)
     upltx =inltx(:,1)+sqrt((inltx(:,2))**2+averageErr)
     do i=1,ninltx
-      ! calculate low bounded Equivalent Dose
+      ! Calculate low bounded Equivalent Dose
       call interpolate(lowup(i,1),lowltx(i),pars,npars,&
                        0.0D+00,maxDose,minvalue)
-      ! calculate up bounded Equivalent Dose
+      ! Calculate up bounded Equivalent Dose
       call interpolate(lowup(i,2),upltx(i),pars,npars,&
                        0.0D+00,maxDose*1.3D+00,minvalue)
     end do
-    ! calculate standard errors for EDs with simple tansformation
+    ! Calculate standard errors for EDs with simple tansformation
     outDose(:,2)=(lowup(:,2)-lowup(:,1))/2.0D+00
-  ! 2) method 2, Monte Carlo iteration
+  ! 2) Method 2, Monte Carlo iteration
   else if(method==2) then
-    ! looping the ith inltx 
+    ! Looping the ith inltx 
     do i=1, ninltx
-      ! seet random seed 
+      ! Set random seed 
       seed=332571951
-      ! initializing McCount numbers, Sum of Mc Dose, 
+      ! Initializing McCount numbers, Sum of Mc Dose, 
       ! Sum of the square of Mc Dose, i, they will be reused
       mccount=0
       sumdose=0.0D+00
       sumdose2=0.0D+00
       ! Moto Carlo simulations
       Inner: do 
-        ! set Ranpars to be pars
+        ! Set Ranpars to be pars
         Ranpars=pars
-        ! generate random ltx values with mean=ltx(1,j), 
+        ! Generate random ltx values with mean=ltx(1,j), 
         ! sd=ltx(2,j), store them in ranltx
         do j=1, ndose
           call r8vec_normal(1,ltx(j,1),ltx(j,2),seed,ranltx(j))
         end do
-        ! fitting x (Dose) .VS. random ltx (ranltx)
+        ! Fitting x (Dose) .VS. random ltx (ranltx)
         if(npars==2) then
           call linearfit(Dose,ranltx,ndose,Ranpars,npars,.false.,&
                          Ranparserrors,Ranpredtval,Ranvalue,Ranerrorflag)
@@ -183,22 +200,22 @@ subroutine sgcED(Dose,ltx,ndose,ninltx,inltx,outDose,pars,npars,predtval,&
                       .false.,Ranparserrors,Ranpredtval,&
                       Ranvalue,lmtol,Ranerrorflag)   
         end if   
-        ! error check of linearfit or lmfit1
+        ! Error check of linearfit or lmfit1
         if(Ranerrorflag(1)==123) then
-          ! generate random values mcSig with mean=inltx(1), sd=inltx(2)
+          ! Generate random values mcSig with mean=inltx(1), sd=inltx(2)
           call r8vec_normal(1,inltx(i,1),inltx(i,2),seed,mcSig(1))
-          ! interpolation using Ranpars and random values mcSig
+          ! Interpolation using Ranpars and random values mcSig
           call interpolate(mcDose,mcSig(1),Ranpars,npars,&
                            0.0D+00,maxDose*1.5D+00,minvalue)
-          ! accumulate McCount, SumDose, Sum of EDs
+          ! Accumulate McCount, SumDose, Sum of EDs
           mccount=mccount+1
           sumdose=sumdose+mcDose
           sumdose2=sumdose2+mcDose**2
         end if
-        ! checking terminate
+        ! Checking terminate
         if(mccount==motoiter) exit Inner
       end do Inner
-      ! calculate standard error for the ith ED
+      ! Calculate standard error for the ith ED
       outDose(i,2)=sqrt((real(mccount,kind=8)*sumdose2-sumdose**2)/ &
                          real(mccount,kind=8)/real(mccount-1,kind=8))
     end do

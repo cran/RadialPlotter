@@ -39,7 +39,7 @@ subroutine lmfit(xdat,ydat,ndat,pars,npars,typ,transf,&
 !                              1.5) error when attempt to inverse the approximated hessian matrix, info=5;
 !                              1.6) if diagnal elements of inversed hessian matrix has at least one minus value, info=6.
 ! ================================================================================================================================
-! Author:: Peng Jun, 2013.05.21, revised in 2013.05.22, re vised in 2013.07.24, revised in 2013.10.05.
+! Author:: Peng Jun, 2013.05.21, revised in 2013.05.22, revised in 2013.07.24, revised in 2013.10.05.
 !
 ! Dependence:: subroutine lmfunc; subroutine lmfunc1; subroutine lmder1; subroutine lmhess; subroutine inverse; subroutine diag.
 !---------------------------------------------------------------------------------------------------------------------------------
@@ -57,7 +57,7 @@ subroutine lmfit(xdat,ydat,ndat,pars,npars,typ,transf,&
   integer(kind=4),intent(out)::info
   !
   ! Variables for subroutine lmhess
-  real   (kind=8),parameter::lmtol=1.0D-09        ! used for singular matrix diagnose in subroutine 
+  real   (kind=8),parameter::lmtol=2.220446D-16   ! used for singular matrix diagnose in subroutine (.Machine$double.eps in R)
                                                   ! lmhess and subroutine inverse
   real   (kind=8),parameter::minAbsPar=0.0D+00    ! for lmhess use
   real   (kind=8),dimension(npars,npars)::hessian ! hessian matrix by finite-difference approximation

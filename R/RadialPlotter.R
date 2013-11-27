@@ -1,5 +1,6 @@
+####################################################################################################
 ###     The R package RadialPlotter
-###     R Package for OSL equivalent dose analysis and radial plot drawing.
+###     R Package for optimizing regular numeric problems in optical stimulated luminescence dating.
 ###     Copyright (C) 2013 Peng Jun 
 ###
 ###     Written by Peng Jun.
@@ -38,6 +39,9 @@
 ###
 ###             Galbraith, R.F., Roberts, R.G., 2012. Statistical aspects of equivalent dose and error calculation and  
 ###             display in OSL dating: An overview and some recommendations. Quaternary Geochronology, 11, pp. 1-27.
+###
+### Mandatory arguments---
+###     EDdata: a data.frame, equivalent doses (two columns).
 ### ******************************************************************************************************************
 RadialPlotter<-
 function(EDdata,ncomp=0,addsigma=0,maxiter=500,
@@ -46,8 +50,8 @@ function(EDdata,ncomp=0,addsigma=0,maxiter=500,
          pcolor="blue",psize=1.5,kratio=0.3,
          zscale=NULL,samplename=NULL)  {
   UseMethod("RadialPlotter")
-}
-### set default method for function RadialPlotter
+} #
+### set default method for function RadialPlotter().
 RadialPlotter.default<-
 function(EDdata,ncomp=0,addsigma=0,maxiter=500,
          maxcomp=9,algorithm=c("lbfgsb","port"),
@@ -56,36 +60,41 @@ function(EDdata,ncomp=0,addsigma=0,maxiter=500,
          zscale=NULL,samplename=NULL)  {
   ### stop if not 
   ###
-  ### For EDdata
+  ### For argument "EDdata"
   if(!is.data.frame(EDdata))    stop("Error: EDdata must be of type data.frame!")
   if(ncol(EDdata)!=2L)          stop("Error: EDdata must contain two columns!")
   if(!is.numeric(
      unlist(unclass(EDdata))))  stop("Error: elements in EDdata must be all of type numeric!")
   if(any(EDdata[,1L]<=0))       stop("Error: equivalent dose must be larger than zero!")
   if(any(EDdata[,2L]<=0))       stop("Error: std.error of equivalent dose must be larger than zero!")
-  ### For maxcomp
+  ###
+  ### For argument "maxcomp"
   if(!is.numeric(maxcomp))      stop("Error: maxcomp must be of type numeric!")
   if(length(maxcomp)!=1L)       stop("Error: maxcomp must be an one-element vector!")
   if(abs(maxcomp-round(maxcomp))
      >=.Machine$double.eps^0.5) stop("Error: maxcomp must be a integer!")                                
   if(maxcomp<0)                 stop("Error: maxcomp must not be smaller than 0!")
   if(maxcomp>nrow(EDdata))      stop("Error: maxcomp must not exceed the length of EDdata!")
-  ### For ncomp
+  ###
+  ### For argument "ncomp"
   if(!is.numeric(ncomp))        stop("Error: ncomp must be of type numeric!")
   if(length(ncomp)!=1L)         stop("Error: ncomp must be an one-element vector!")
   if(!ncomp %in% (-2:maxcomp))  stop("Error: ncomp must be an integer ranging from -2 to maxcomp!")
-  ### For addsigma
+  ###
+  ### For argument "addsigma"
   if(!is.numeric(addsigma))     stop("Error: addsigma must be of type numeric!")
   if(length(addsigma)!=1L)      stop("Error: addsigma must be an one-element vector!")
   if(addsigma<0.0)              stop("Error: addsigma must not be smaller than 0!")
-  ### For maxiter
+  ###
+  ### For argument "maxiter"
   if(!is.numeric(maxiter))      stop("Error: maxiter must be of type numeric!")
   if(length(maxiter)!=1L)       stop("Error: maxiter must be an one-element vector!")
   if(abs(maxiter-round(maxiter))
      >=.Machine$double.eps^0.5) stop("Error: maxiter must be an integer!")
   if(maxiter<10L)               stop("Error: maxiter is too small!")
   if(maxiter>10000L)            stop("Error: maxiter is too large!")
-  ### For algorithm
+  ###
+  ### For argument "algorithm"
   if(!is.character(algorithm))  stop("Error: algorithm must be of type character!")
   if(length(algorithm)==1L) {
     if(!algorithm %in% c("lbfgsb","port"))      stop("Error: algorithm must be either 'lbfgsb' or 'port'!")
@@ -93,33 +102,41 @@ function(EDdata,ncomp=0,addsigma=0,maxiter=500,
     if(!all(algorithm %in% c("lbfgsb","port"))) stop("Error: only algorithm 'lbfgsb' or 'port' is available!")
   } else {                                      stop("Error: algorithm must contain no more than two elements!")
   } # end if
-  ### For eps
+  ###
+  ### For argument "eps"
   if(!is.numeric(eps))          stop("Error: eps must be of type numeric!")
   if(length(eps)!=1L)           stop("Error: eps must be an one-element vector!")
   if(eps<0)                     stop("Error: eps must be not smaller than 0!")
-  ### For plot
+  ###
+  ### For argument "plot"
   if(!is.logical(plot))         stop("Error: plot must be either TRUE or FALSE!")
   if(length(plot)!=1L)          stop("Error: plot must be an one-element vector!")
-  ### For pcolor
+  ###
+  ### For argument "pcolor"
   if(!is.character(pcolor))     stop("Error: pcolor must be of type character!")
   if(length(pcolor)!=1L)        stop("Error: pcolor must be an one-element vector!")
-  ### For psize
+  ###
+  ### For argument "psize"
   if(!is.numeric(psize))        stop("Error: psize must be of type numeric!")
   if(length(psize)!=1L)         stop("Error: psize must be an one-element vector!")
   if(psize<0.1)                 stop("Error: psize is too small!")
   if(psize>5.0)                 stop("Error: psize is too large!")
-  ### For kratio
+  ###
+  ### For argument "kratio"
   if(!is.numeric(kratio))       stop("Error: kratio must be of type numeric!")
   if(length(kratio)!=1L)        stop("Error: kratio must be an one-element vector!")
   if(abs(kratio)>3.0)           stop("Error: magnitude of kratio is too large!")
-  ### For zscale
+  ###
+  ### For argument "zscale"
   if(!is.null(zscale) &&
      !is.numeric(zscale))       stop("Error: zscale must either be NULL or a numeric vector!")
-  ### For samplename
+  ###
+  ### For argument "samplename"
   if(!is.null(samplename) &&
      !is.character(samplename)) stop("Error: samplename must either be NULL or of type character!")
   ### 
   if(ncomp==0L && maxcomp<=1L)  stop("Error: maxcomp must non't be smaller than 2 if ncomp is 0!")  
+  ###
   ###
   ### Set n, ED, sED
   n<-nrow(EDdata) 
@@ -577,103 +594,118 @@ print.RadialPlotter<-function(x,...) {
   } # end if
   cat("===========================The End===========================","\n\n")
 } # end function print.RadialPlotter
-############################################ END FUNCTION RadialPlotter #######################################
-
-################################################## FUNCTION calED #############################################
-### ***********************************************************************************************************
+################################################ END FUNCTION RadialPlotter ########################################
+###
+################################################### FUNCTION calED #################################################
+### ****************************************************************************************************************
 ### Function calED() is used to calculate equivalent dose value.
 ###
-###    Author: Peng Jun, 2013.06.22, revised in 2013.07.26, revised in 2013.08.01, revised in 2013.09.18
+###    Author: Peng Jun, 2013.06.22, revised in 2013.07.26, revised in 2013.08.01, revised in 2013.09.18,
+###            revised in 2013.11.12.
 ###
 ### Reference: Duller, G.A.T., 2007. Assessing the error on equivalent dose estimates derived 
 ###            from single aliquot regenerative dose measurements. Ancient TL 25, pp. 15-24.
 ###            Duller, G., 2007. Analyst. pp. 27-28.
-### **********************************************************************************************************
+###
+### Mandatory arguments---
+### Curvedata: a data.frame, three columns, data used for constructing dose-response curve.
+###       Ltx: a vector of length two that contains Lx/Tx and s(Lx/Tx), from which dose and std.dose can be obtained.
+### *****************************************************************************************************************
 calED<-
 function(Curvedata,Ltx,model=c("line","exp","line+exp"),
          origin=FALSE,nstart=100,upb=1,ErrorMethod=c("mc","sp"),
          nsim=1000,plot=TRUE,samplename=NULL) {
   UseMethod("calED")
-}
-### Default method for function calED
+} #
+### Default method for function calED().
 calED.default<-
 function(Curvedata,Ltx,model=c("line","exp","line+exp"),
          origin=FALSE,nstart=100,upb=1,ErrorMethod=c("mc","sp"),
          nsim=1000,plot=TRUE,samplename=NULL)  {
-  ### stop if not
+  ### Stop if not
   ###
-  ### For Curvedata
-  if(!is.data.frame(Curvedata))     stop("Error: Curvedata must be of type data.frame!")
-  if(ncol(Curvedata)!=3L)           stop("Error: Curvedata must have three columns!")
+  ### For argument "Curvedata"
+  if(!is.data.frame(Curvedata))         stop("Error: Curvedata must be of type data.frame!")
+  if(ncol(Curvedata)!=3L)               stop("Error: Curvedata must contain three columns!")
   if(!is.numeric(
-     unlist(unclass(Curvedata))))   stop("Error: elements in Curvedata must be all of type numeric!")
-  if(any(Curvedata<0.0))            stop("Error: all elements in Curvedata must be not smaller than zero!")
-  ### For Ltx
-  if(!is.numeric(Ltx))              stop("Error: Ltx must be a numeric vector!")
-  if(length(Ltx)!=2L)               stop("Error: Ltx must contains two elements!")
-  if(Ltx[1L]>max(Curvedata[,2L]))   stop("Error: Ltx must not exceed maximum Lx/Tx in Curvedata!")
-  if(Ltx[1L]<=0.0)                  stop("Error: Ltx must larger than zero!")
-  if(Ltx[2L]<=0.0)                  stop("Error: std.error of Ltx must larger than 0!")
-  if(Ltx[2L]>max(Curvedata[,2L]))   stop("Error: std.error of Ltx must not exceed maximum Lx/Tx in Curvedata!")
-  ### For model
-  if(!is.character(model))          stop("Error: model must be 'line', 'exp' or 'line+exp'!")
-  if(length(model)>=4L)             stop("Error: model must contain no more than three elements!")
+     unlist(unclass(Curvedata))))       stop("Error: all values in Curvedata must be of type numeric!")
+  if(any(Curvedata<0.0))                stop("Error: all values in Curvedata must not smaller than zero!")
+  ###
+  ### For argument "Ltx"
+  if(!is.numeric(Ltx))                  stop("Error: Ltx must be a numeric vector!")
+  if(length(Ltx)!=2L)                   stop("Error: Ltx must contains two values!")
+  if(Ltx[1L]>max(Curvedata[,2L])*1.3)   stop("Error: Ltx must not exceed maximum Lx/Tx in Curvedata!")
+  if(Ltx[1L]<=0.0)                      stop("Error: Ltx must larger than zero!")
+  if(Ltx[2L]<=0.0)                      stop("Error: Std.Err of Ltx must larger than 0!")
+  if(Ltx[2L]>max(Curvedata[,2L])*1.3)   stop("Error: Std.Err of Ltx must not exceed maximum Lx/Tx in Curvedata!")
+  ###
+  ### For argument "model"
+  if(!is.character(model))              stop("Error: model must be of type character!")
+  if(length(model)>=4L)                 stop("Error: model must contain no more than three elements!")
   if(length(model)==1L) {
     if(!model %in% 
-       c("line","exp","line+exp"))  stop("Error: model must be one of 'line', 'exp', 'line+exp'!")
+       c("line","exp","line+exp"))      stop("Error: model must be one of 'line', 'exp', 'line+exp'!")
   } else if(length(model)>=2L) {
     if(!all(model %in% 
-       c("line","exp","line+exp"))) stop("Error: incorrect model!")
-  } # end if
-  ### For origin
-  if(!is.logical(origin))           stop("Error: origin must be of type logical!")
-  if(length(origin)!=1L)            stop("Error: origin must be an one-element vector!")
-  ### For nstart
-  if(!is.numeric(nstart))           stop("Error: nstart must be of type numeric!")
-  if(length(nstart)!=1L)            stop("Error: nstart must be an one-element vector!")
-  if(abs(nstart-round(nstart))
-     >=.Machine$double.eps^0.5)     stop("Error: nstart must be an integer!")
-  if(nstart<=1L)                    stop("Error: nstart must larger than 1!")
-  if(nstart>10000L)                 stop("Error: nstart is too large!")    
-  ### For upb      
-  if(!is.numeric(upb))              stop("Error: upb must be of type numeric!")
-  if(length(upb)!=1L)               stop("Error: upb must be an one-element vector!")
-  if(upb<=0)                        stop("Error: upb must larger than 0!")
-  if(upb>1e3)                       stop("Error: upb is too large!")
-  ### For ErrorMethod
-  if(!is.character(ErrorMethod))    stop("Error: ErrorMethod must be of type character!")
-  if(length(ErrorMethod)>=3L)       stop("Error: ErrorMethod must contain no more than two elements!")
-  if(length(ErrorMethod)==1L) {
-    if(!ErrorMethod %in%
-       c("sp","mc"))                stop("Error: ErrorMethod must be either 'sp' or 'mc'!")
-  } else if(length(ErrorMethod==2L)) {
-    if(!all(ErrorMethod %in% 
-       c("sp","mc")))               stop("Error: incorrect ErrorMethod!")
-  } # end if
-  ### For nsim
-  if(!is.numeric(nsim))             stop("Error: nsim must be of type numeric!")
-  if(length(nsim)!=1L)              stop("Error: nsim must be an one-element vector!")
-  if(abs(nsim-round(nsim))
-     >=.Machine$double.eps^0.5)     stop("Error: nsim must be an integer!")
-  if(nsim<100L)                     stop("Error: nsim is too small!")
-  if(nsim>50000L)                   stop("Error: nsim is too large!")
-  ### For plot
-  if(!is.logical(plot))             stop("Error: plot must be either TRUE or FALSE!")
-  if(length(plot)!=1L)              stop("Error: plot must be an one-element vector!")
-  ### For samplename
-  if(!is.character(samplename) &&
-     !is.null(samplename))          stop("Error: samplename must be NULL or of type character!")
-  if(!is.null(samplename)) {
-    if(length(samplename)!=1L)      stop("Error: samplename must be an one-element vector!")
+       c("line","exp","line+exp")))     stop("Error: incorrect model, only 'line', 'exp' and 'line+exp' are available!")
   } # end if
   ###
-  ### set default model (linear)
+  ### For argument "origin"
+  if(!is.logical(origin))               stop("Error: origin must be of type logical!")
+  if(length(origin)!=1L)                stop("Error: origin must be an one-element vector!")
+  ###
+  ### For argument "nstart"
+  if(!is.numeric(nstart))               stop("Error: nstart must be of type numeric!")
+  if(length(nstart)!=1L)                stop("Error: nstart must be an one-element vector!")
+  if(abs(nstart-round(nstart))
+     >=.Machine$double.eps^0.5)         stop("Error: nstart must be an integer!")
+  if(nstart<10L)                        stop("Error: nstart must larger than 10!")
+  if(nstart>5000L)                      stop("Error: nstart must not exceed 5000!") 
+  ###   
+  ### For argument "upb"      
+  if(!is.numeric(upb))                  stop("Error: upb must be of type numeric!")
+  if(length(upb)!=1L)                   stop("Error: upb must be an one-element vector!")
+  if(upb<=0)                            stop("Error: upb must larger than 0!")
+  if(upb>100)                           stop("Error: upb must not exceed 100!")
+  ###
+  ### For argument "ErrorMethod"
+  if(!is.character(ErrorMethod))        stop("Error: ErrorMethod must be of type character!")
+  if(length(ErrorMethod)>=3L)           stop("Error: ErrorMethod must contain no more than two elements!")
+  if(length(ErrorMethod)==1L) {
+    if(!ErrorMethod %in%
+       c("sp","mc"))                    stop("Error: ErrorMethod must be either 'sp' or 'mc'!")
+  } else if(length(ErrorMethod==2L)) {
+    if(!all(ErrorMethod %in% 
+       c("sp","mc")))                   stop("Error: incorrect ErrorMethod, only 'sp' and 'mc' are available!")
+  } # end if
+  ###
+  ### For argument "nsim"
+  if(!is.numeric(nsim))                 stop("Error: nsim must be of type numeric!")
+  if(length(nsim)!=1L)                  stop("Error: nsim must be an one-element vector!")
+  if(abs(nsim-round(nsim))
+     >=.Machine$double.eps^0.5)         stop("Error: nsim must be an integer!")
+  if(nsim<100L)                         stop("Error: nsim must not smaller than 100!")
+  if(nsim>3000L)                        stop("Error: nsim must not exceed 3000!")
+  ###
+  ### For argument "plot"
+  if(!is.logical(plot))                 stop("Error: plot must be either TRUE or FALSE!")
+  if(length(plot)!=1L)                  stop("Error: plot must be an one-element vector!")
+  ###
+  ### For argument "samplename"
+  if(!is.character(samplename) &&
+     !is.null(samplename))              stop("Error: samplename must be NULL or of type character!")
+  if(!is.null(samplename)) {
+    if(length(samplename)!=1L)          stop("Error: samplename must be an one-element vector!")
+  } # end if
+  ###
+  ###
+  ### Set default model (linear)
   model<-model[1L]
-  ### set default ErrorMethod (monte carlo)
+  ### Set default ErrorMethod (monte carlo)
   ErrorMethod<-ErrorMethod[1L]
   ###
   ### ************************************************
-  ### Check if data is enough for model fitting
+  ### Check if observations are enough for model fitting
   if(origin==TRUE) {
     if(model=="line" && length(levels(factor(Curvedata[,1L])))<1L) {
       stop("Error: fitting a linear model (origin) needs at least one paired independent observations!")
@@ -691,7 +723,7 @@ function(Curvedata,Ltx,model=c("line","exp","line+exp"),
   } # end if
   ###
   ### Specify parameters that will be used 
-  ### in Fortran subroutine "calED.f90" or "calED2.f90"
+  ### in Fortran subroutine calED() or calED2()
   Dose<-drop(Curvedata[,1L])                             # dose
   ndose<-nrow(Curvedata)                                 # ndose
   ltx<-cbind(drop(Curvedata[,2L]), drop(Curvedata[,3L])) # ltx
@@ -707,7 +739,7 @@ function(Curvedata,Ltx,model=c("line","exp","line+exp"),
     2L}  else if(model=="exp") {
     3L} else if(model=="line+exp") {
     4L} # end if      
-    } # end if                             # npars
+  } # end if                               # npars
   pars<-vector(length=npars)               # pars
   predtval<-vector(length=ndose)           # predtval
   parserrors<-vector(length=npars)         # parserrors
@@ -728,7 +760,7 @@ function(Curvedata,Ltx,model=c("line","exp","line+exp"),
   ###
   ### Error checking 
   if(res$errorflag[1L]!=123) {
-    stop('Error: fail in Dose-Response curve fitting, fitting model might be inappropriate, or upb need to be modified!')
+    stop("Error: fail in dose-response curve fitting, fitting model might be inappropriate, or upb need to be modified!")
   } # end if
   ###
   ### Set LMpars for output
@@ -745,10 +777,12 @@ function(Curvedata,Ltx,model=c("line","exp","line+exp"),
   colnames(fit.value)<-c("ReDose", "Lx/Tx", "Fit.Lx/Tx")
   rownames(fit.value)<-paste("ReDose.", 1:ndose, sep="")
   ###
+  ### check if std.error of ED is available
+  if(!is.finite(res$outDose[2L]))  {
+    print("Warning: fail in estimating standard error of equivalent dose!")
+  } # end if
   ### Set Dose for output
   ED<-c("ED"=res$outDose[1L], "Std.ED"=res$outDose[2L])
-  ### check output
-  if(!is.finite(ED[2L]))  stop("Error: fail in estimating standard error of equivalent dose!")
   ###
   ### Reset mcED
   if(ErrorMethod=="sp") {
@@ -767,10 +801,10 @@ function(Curvedata,Ltx,model=c("line","exp","line+exp"),
         mar=c(3,3,2,1)+0.1)
     Xlim<-max(Curvedata[,1L], ED[1L])
     Ylim<-max(Curvedata[,2L], inltx[1L])
-    plot(NA, NA, main=samplename, xlab="Dose (Gy)",ylab="Lx/Tx",las=0, cex.lab=1.25,
-         xlim=c(0,Xlim*1.05), ylim=c(0,Ylim*1.05), xaxs="i", yaxs="i", lab=c(7,7,9))
+    plot(NA, NA, main=samplename, xlab="Dose (Gy)",ylab="Lx/Tx",las=0, cex.main=1.25, 
+         cex.lab=1, xlim=c(0,Xlim*1.05), ylim=c(0,Ylim*1.05), xaxs="i", yaxs="i", lab=c(7,7,9))
     ###
-    ### Add a filled density curve if ErrorMethod='mc'
+    ### Add a filled density curve to current plot if ErrorMethod='mc'
     if(ErrorMethod=="mc") {
       dmcED<-density(res$mcED)
       dxy<-data.frame(unclass(dmcED)[c(1L,2L)])
@@ -782,7 +816,7 @@ function(Curvedata,Ltx,model=c("line","exp","line+exp"),
     ### Add ReDose as points
     points(Curvedata[,c(1L,2L)], pch=21, cex=3, bg="white")
     ###
-    ### Add error bars to Lx/Tx
+    ### Add error bars [s(Lx/Tx)] to Lx/Tx
     if(any(ltx[,2L]>=1e-3)) {
       arr<-suppressWarnings(try(arrows(Dose[ltx[,2L]>=1e-3], ltx[ltx[,2L]>=1e-3,1L]-ltx[ltx[,2L]>=1e-3,2L]/2, Dose[ltx[,2L]>=1e-3],
                                        ltx[ltx[,2L]>=1e-3,1L]+ltx[ltx[,2L]>=1e-3,2L]/2, code=3, lwd=2.5, angle=90, length=0.05, col="black"), 
@@ -817,44 +851,47 @@ function(Curvedata,Ltx,model=c("line","exp","line+exp"),
       } # end if
     } # end if
     ###
-    ### add a dash line to the plot
+    ### Add a dash line to the plot
     lines(c(0,ED[1L],ED[1L]), c(inltx[1L],inltx[1L],0), lty="dashed", lwd=2)
     ###
     ### Add error bars if standard errors for Doses are available
-    if(ED[2L]>=1e-3) {
-      arr<-suppressWarnings(try(arrows(ED[1L]-ED[2L]/2, inltx[1L], ED[1L]+ED[2L]/2,
-                                inltx[1L], code=3, lwd=2.5, angle=90, length=0.05, col="black"), 
-                                silent=TRUE))
+    if(is.finite(ED[2L])) {
+      if(ED[2L]>=1e-3) {
+        arr<-suppressWarnings(try(arrows(ED[1L]-ED[2L]/2, inltx[1L], ED[1L]+ED[2L]/2,
+                                  inltx[1L], code=3, lwd=2.5, angle=90, length=0.05, col="black"), 
+                                  silent=TRUE))
+      } # end if
     } # end if
     ###
-    ### Add a legend
+    ### Add a legend to the plot
     Curvetype<-if(model=="line") {
                  "Linear" } else if(model=="exp") {
                  "Exponential" } else if(model=="line+exp") {
                  "Exponential plus Linear"} # end if
-    legend("topleft", legend=c(paste("Curve type: ", Curvetype,sep=""),
+    legend("topleft", legend=c(paste("Type: ", Curvetype,sep=""),
            paste("ED=", round(ED[1L],2L), " +- ", round(ED[2L],3L), " (Gy)", sep="")),
-           yjust=2, ncol=1, cex=1.25, bty="o")
-    ### Add grid and box
+           yjust=2, ncol=1L, cex=par("cex"), bty="n")
+    ### Add grid and box to the plot
     grid()
     box(lwd=2)
     ### Reset plot(par) before leaving!
-    on.exit(par(bg="transparent",
-                mgp=c(3,1,0),
-                mar=c(5,4,4,2)+0.1))
+    par(bg="transparent",
+        mgp=c(3,1,0),
+        mar=c(5,4,4,2)+0.1)
   } # end if
   ###
   ### Output the results (invisible)   
   invisible(output)
 } # end function calED
 ####################################### END FUNCTION calED ##################################################
-
+###
 ######################################### FUNCTION decomp ###################################################
 ### ********************************************************************************************************
 ### Function decomp() is used to decompose OSL signal
-### curve, either type 'CW' or 'LM' can be analyzed.
+### curve, either type "CW" or "LM" can be analyzed.
 ###
-###      Author: Peng Jun, 2013.06.05, revised in 2013.07.25, revised in 2013.09.18, revised in 2013.10.06
+###      Author: Peng Jun, 2013.06.05, revised in 2013.07.25, revised in 2013.09.18, revised in 2013.10.06,
+###              revised in 2013.11.17.
 ###
 ###  References: Bluszcz, A., 1996. Exponential function fitting to TL growth data and similar
 ###              applications. Geochronometria 13, 135–141.
@@ -865,6 +902,9 @@ function(Curvedata,Ltx,model=c("line","exp","line+exp"),
 ###              Jain, M., Murray, A.S., Boetter-Jensen, L., 2003. Characterisation of blue-light stimulated 
 ###              luminescence components in different quartz samples: implications for dose measurement. 
 ###              Radiation Measurements, 37 (4-5), pp. 441-449.
+###
+### Mandatory arguments---
+###     Sigdata: a dataframe, OSL decay curve (two columns).
 ### ********************************************************************************************************
 decomp<-
 function(Sigdata,ncomp=3,typ=c("cw","lm"),
@@ -872,8 +912,8 @@ function(Sigdata,ncomp=3,typ=c("cw","lm"),
          LEDpower=60,LEDwavelength=470,plot=TRUE,
          xlog=TRUE,lwd=3,samplename=NULL,outfile=NULL) {
   UseMethod("decomp")
-} 
-### default method for decomp
+} #
+### default method for function decomp().
 decomp.default<-
 function(Sigdata,ncomp=3,typ=c("cw","lm"),
          control.args=list(),transf=FALSE,
@@ -881,86 +921,120 @@ function(Sigdata,ncomp=3,typ=c("cw","lm"),
          xlog=TRUE,lwd=3,samplename=NULL,outfile=NULL) {
   ### stop if not
   ###
-  ### For Sigdata
-  if(!is.data.frame(Sigdata))       stop("Error: Sigdata must be of type data.frame!")
-  if(ncol(Sigdata)!=2L)             stop("Error: Sigdata must has two columns!")
+  ### For argument "Sigdata"
+  if(!is.data.frame(Sigdata))             stop("Error: Sigdata must be of type data.frame!")
+  if(ncol(Sigdata)<2L)                    stop("Error: Sigdata must contain at least two columns!")
+  if(ncol(Sigdata)>2L && typ[1L]!="cw")   stop("Error: only signal table of type CW-OSL can be analyzed currently!")
   if(!is.numeric(
-     unlist(unclass(Sigdata))))     stop("Error: elements in Sigdata must be all of type numeric!")
-  if(any(Sigdata[,1L]<0))           stop("Error: the first column of Sigdata [time] must not contain value that below zero!")
-  ### For ncomp
-  if(!is.numeric(ncomp))            stop("Error: ncomp must be of type numeric!")
-  if(length(ncomp)!=1L)             stop("Error: ncomp must be an one-element vector!")
-  if(!ncomp %in% (1:7) )            stop("Error: ncomp must be a integer ranges from 1 to 7!")
-  ### For typ
-  if(!is.character(typ))            stop("Error: typ must be of type character!")
+     unlist(unclass(Sigdata))))           stop("Error: all elements in Sigdata must be of type numeric!")
+  if(any(Sigdata[,1L]<0.0))               stop("Error: the first column of Sigdata [time] must larger than zero!")
+  if(any(Sigdata[,-1L]<0.0))              stop("Error: all signal values must larger than zero!")
+  ###
+  ### For argument "ncomp"
+  if(!is.numeric(ncomp))                  stop("Error: ncomp must be of type numeric!")
+  if(length(ncomp)!=1L)                   stop("Error: ncomp must be an one-element vector!")
+  if(!ncomp %in% (1L:7L) )                stop("Error: ncomp must be a integer ranges from 1 to 7!")
+  ###
+  ### For argument "typ"
+  if(!is.character(typ))                  stop("Error: typ must be of type character!")
   if(length(typ)==1L) {
-    if(!typ %in% c("cw","lm"))      stop("Error: typ must be either 'cw' or 'lm'!")
-    if(typ=="cw" && 
-       which.max(Sigdata[,2L])>3L)  stop("Error: incorrect typ!")
-    if(typ=="lm" &&
-       which.max(Sigdata[,2L])<=3L) stop("Error: incorrect typ!")
+    if(!typ %in% c("cw","lm"))            stop("Error: typ must be either 'cw' or 'lm'!")
+    if(ncol(Sigdata)==2L) {
+      if(typ=="cw" && 
+         which.max(Sigdata[,2L])>3L)      stop("Error: incorrect typ, signal may not be of type CW-OSL!")
+      if(typ=="lm" &&
+         which.max(Sigdata[,2L])<=3L)     stop("Error: incorrect typ, signal may not be of type LM-OSL!")
+    } else if(ncol(Sigdata)>2L) {
+      if(which.max(apply(Sigdata[,-1L],1L,mean))>3L)        
+                                          stop("Error: incorrect typ, signal may not be of type CW-OSL!")
+    } # end if
   } else if(length(typ)==2L) {
-    if(!all(typ %in% c("cw","lm"))) stop('Error: incorrect typ!')
-    if(typ[1L]=="cw" && 
-       which.max(Sigdata[,2L])>3L)  stop("Error: incorrect typ!")
-    if(typ[1L]=="lm" &&
-       which.max(Sigdata[,2L])<=3L) stop("Error: incorrect typ!")
-  } else {                          stop("Error: typ must contains one or two elements!")
+    if(!all(typ %in% c("cw","lm")))       stop("Error: incorrect typ, please choose one between 'cw' and 'lm'!")
+    if(ncol(Sigdata)==2L) {
+      if(typ[1L]=="cw" && 
+         which.max(Sigdata[,2L])>3L)      stop("Error: incorrect typ, signal may not be of type CW-OSL!")
+      if(typ[1L]=="lm" &&
+         which.max(Sigdata[,2L])<=3L)     stop("Error: incorrect typ, signal may not be of type LM-OSL!")
+    } else if(ncol(Sigdata)>2L) {
+      if(which.max(apply(Sigdata[,-1L],1L,mean))>3L)        
+                                          stop("Error: incorrect typ, signal may not be of type CW-OSL!")
+    } # end if
+  } else {                                stop("Error: typ must contain no more than two elements!")
   } # end if
-  ### For control.args
-  if(class(control.args)!="list")   stop("Error: control.args must be a list!")
-  if(length(control.args)>=6L)      stop("Error: number of parameters in control.args must smaller than 6!")
+  ###
+  ### For argument "control.args"
+  if(class(control.args)!="list")         stop("Error: control.args must be a list!")
+  if(length(control.args)>=6L)            stop("Error: number of parameters in control.args must not exceed 5!")
   if(!all(names(control.args) %in% 
      list("factor","f","cr",
-          "maxiter","tol")))        stop("Error: incorrect parameter in control.args!")
-  ### For transf
-  if(!is.logical(transf))           stop("Error: transf must be of type logical!")
-  if(length(transf)!=1L)            stop("Error: transf must be an one-element vector!")
-  ### For LEDpower
-  if(!is.numeric(LEDpower))         stop("Error: LEDpower must be of type numeric!")
-  if(length(LEDpower)!=1L)          stop("Error: LEDpower must be an one-element vector!")
-  if(LEDpower<=0.0)                 stop("Error: LEDpower must be larger than zero!")
-  ### For LEDwavelength
-  if(!is.numeric(LEDwavelength))    stop("Error: LEDwavelength must be of type numeric!")
-  if(length(LEDwavelength)!=1L)     stop("Error: LEDwavelength must be an one-element vector!")
-  if(LEDwavelength<=0.0)            stop("Error: LEDwavelength must be larger than zero!")
-  ### For plot
-  if(!is.logical(plot))             stop("Error: plot must be either TRUE or FALSE!")
-  if(length(plot)!=1L)              stop("Error: plot must be an one-element vector!")
-  ### For xlog
-  if(!is.logical(xlog))             stop("Error: xlog must be either TRUE or FALSE!")
-  if(length(xlog)!=1L)              stop("Error: xlog must be an one-element vector!")
-  ### For lwd
-  if(!is.numeric(lwd))              stop("Error: lwd must be of type numeric!")
-  if(length(lwd)!=1L)               stop("Error: lwd must be an one-element vector!")
-  if(lwd<=0.0)                      stop("Error: lwd must be larger than zero!")
-  ### For samplename
+          "maxiter","tol")))              stop("Error: incorrect parameter in control.args!")
+  ###
+  ### For argument "transf"
+  if(!is.logical(transf))                 stop("Error: transf must be of type logical!")
+  if(length(transf)!=1L)                  stop("Error: transf must be an one-element vector!")
+  ###
+  ### For argument "LEDpower"
+  if(!is.numeric(LEDpower))               stop("Error: LEDpower must be of type numeric!")
+  if(length(LEDpower)!=1L)                stop("Error: LEDpower must be an one-element vector!")
+  if(LEDpower<=0.0)                       stop("Error: LEDpower must be larger than zero!")
+  ###
+  ### For argument "LEDwavelength"
+  if(!is.numeric(LEDwavelength))          stop("Error: LEDwavelength must be of type numeric!")
+  if(length(LEDwavelength)!=1L)           stop("Error: LEDwavelength must be an one-element vector!")
+  if(LEDwavelength<=0.0)                  stop("Error: LEDwavelength must larger than zero!")
+  ###
+  ### For argument "plot"
+  if(!is.logical(plot))                   stop("Error: plot must be either TRUE or FALSE!")
+  if(length(plot)!=1L)                    stop("Error: plot must be an one-element vector!")
+  ###
+  ### For argument "xlog"
+  if(!is.logical(xlog))                   stop("Error: xlog must be either TRUE or FALSE!")
+  if(length(xlog)!=1L)                    stop("Error: xlog must be an one-element vector!")
+  ###
+  ### For argument "lwd"
+  if(!is.numeric(lwd))                    stop("Error: lwd must be of type numeric!")
+  if(length(lwd)!=1L)                     stop("Error: lwd must be an one-element vector!")
+  if(lwd<=0.0)                            stop("Error: lwd must larger than zero!")
+  ###
+  ### For argument "samplename"
   if(!is.null(samplename) &&
-     !is.character(samplename))     stop("Error: samplename must be NULL or type of character!")
+     !is.character(samplename))           stop("Error: samplename must be NULL or of type character!")
   if(!is.null(samplename)) {
-    if(length(samplename)!=1L)      stop("Error: sample name must be an one-element vector!")
-  } # end if
-  ### For outfile
-  if(!is.null(outfile) &&
-     !is.character(outfile))        stop("Error: outfile must be NULL or type of character!")
-  if(!is.null(outfile)) {
-    if(length(outfile)!=1L)         stop("Error: outfile must be an one-element vector!")
+    if(length(samplename)!=1L)            stop("Error: sample name must be an one-element vector!")
   } # end if
   ###
-  ### public parameters for subroutine  
-  ### 'decomp' and subroutine 'fitlm'
-  tim<-drop(Sigdata[,1L])
-  sig<-drop(Sigdata[,2L])
-  ntim<-length(tim)
-  pars<-Stdpars<-vector(length=2*ncomp)
+  ### For argument "outfile"
+  if(!is.null(outfile) &&
+     !is.character(outfile))              stop("Error: outfile must be NULL or of type character!")
+  if(!is.null(outfile)) {
+    if(ncol(Sigdata)>2L)                  stop("Error: signal table is not allowed to be written out!")
+    if(length(outfile)!=1L)               stop("Error: outfile must be an one-element vector!")
+  } # end if
+  ###
+  ###
+  ### Public parameters for Fortran   
+  ### subroutine decomp() and fitlm()
+  if(ncol(Sigdata)==2L) {
+    ### Decompose signal curve
+    ntim<-nrow(Sigdata)
+    tim<-drop(Sigdata[,1L])
+    sig<-drop(Sigdata[,2L])
+  } else if(ncol(Sigdata)>2L) {
+    ### Decompose signal table (CW)
+    ntim<-nrow(Sigdata)*(ncol(Sigdata)-1L)
+    Sigdata<-Sigdata[,c(1L,order(Sigdata[1L,-1L],decreasing=TRUE)+1L)]
+    tim<-rep(Sigdata[,1L,drop=TRUE],ncol(Sigdata)-1L)
+    sig<-c(Sigdata[,-1L],recursive=TRUE)
+  } # end if 
+  pars<-Stdpars<-vector(length=2L*ncomp)
   value<--99.0
   predtval<-vector(length=ntim)
-  ### set default typ (CW)
+  ### Set default typ (CW)
   typ<-typ[1L]
   ###
-  ### do a type dependent fitting
+  ### Do a type dependent fitting
   if(typ=="cw") {
-    ### for OSL signal of type 'CW'
+    ### For OSL signal of type "CW"
     ### default arguments for differential evolution
     ### ****************************************************
     args<-list(factor=15L,f=0.5,cr=0.99,maxiter=1000L,tol=0.1)   
@@ -970,36 +1044,36 @@ function(Sigdata,ncomp=3,typ=c("cw","lm"),
     cr<-args$cr
     maxiter<-args$maxiter
     tol<-args$tol
-    ### For factor
+    ### For argument "factor"
     if(!is.numeric(factor))       stop("Error: control.args: factor must be of type numeric!")
     if(length(factor)!=1L)        stop("Error: control.args: factor must be an one-element vector!")
     if(abs(factor-round(factor))
        >=.Machine$double.eps^0.5) stop("Error: control.args: factor must be an integer!")
     if(factor<3L)                 stop("Error: control.args: factor is too small!") 
     if(factor>20L)                stop("Error: control.args: factor is too large!")  
-    ### For f           
+    ### For argument "f"           
     if(!is.numeric(f))            stop("Error: control.args: f must be of type numeric!")
     if(length(f)!=1L)             stop("Error: control.args: f must be an one-element vector!")
     if(f<=0.0 || f>1.2)           stop("Error: control.args: incorrect f!")
-    ### For cr
+    ### For argument "cr"
     if(!is.numeric(cr))           stop("Error: control.args: cr must be of type numeric!")
     if(length(cr)!=1L)            stop("Error: control.args: cr must be an one-element vector!")
     if(cr<=0.0 || cr>1.0)         stop("Error: control.args: incorrect cr!")
-    ### For maxiter
+    ### For argument "maxiter"
     if(!is.numeric(maxiter))      stop("Error: control.args: maxiter must be of type numeric!")
     if(length(maxiter)!=1L)       stop("Error: control.args: maxiter must be an one-element vector!")
     if(abs(maxiter-round(maxiter))
        >=.Machine$double.eps^0.5) stop("Error: control.args: maxiter must be an integer!")
     if(maxiter<10L)               stop("Error: control.args: maxiter is too small!")
     if(maxiter>10000L)            stop("Error: control.args: maxiter is too large!") 
-    ### For tol
+    ### For argument "tol"
     if(!is.numeric(tol))          stop("Error: control.args: tol must be of type numeric!")
     if(length(tol)!=1L)           stop("Error: control.args: tol must be an one-element vector!")
     if(tol<0.0)                   stop("Error: control.args: incorrect tol!")
     ###
     ### ****************************************************
     errorflag<-vector(length=3L)
-    ### call subroutine decomp
+    ### Call Fortran subroutine decomp()
     res<-.Fortran("decomp",as.integer(ncomp),as.double(tim),as.double(sig),
           as.integer(ntim),pars=as.double(pars),Stdpars=as.double(Stdpars),
           value=as.double(value),transf=as.integer(transf),predtval=as.double(predtval),
@@ -1010,25 +1084,26 @@ function(Sigdata,ncomp=3,typ=c("cw","lm"),
        stop(paste("Error: signal can not be decomposed to",ncomp,"components, or control.args need modification!"))
     } # end if
   } else if(typ=="lm") {
-    ### for OSL signal of type "LM"
+    ### For OSL signal of type "LM"
     errorflag<-0
+    ### Call Fortran subroutine fitlm()
     res<-.Fortran("fitlm",as.integer(ncomp),as.double(tim),as.double(sig),as.integer(ntim),
           pars=as.double(pars),Stdpars=as.double(Stdpars),value=as.double(value),predtval=as.double(predtval),
           transf=as.integer(transf),errorflag=as.integer(errorflag),package="RadialPlotter")
-    ### error checking
+    ### Error checking
     if(all(res$pars<0.0)) {
       stop(paste("Error: signal can not be decomposed to",ncomp,"components!"))
     } # end if
   } # end if
   ### print(res$errorflag)
   ###
-  ### decide Photoionisation cross-section (cm2)
+  ### Decide Photoionisation cross-section (cm2) (may not be ture!)
   h<-6.62606957e-34
   ny<-299792458/(LEDwavelength/10^9)
   E<-h*ny
   LEDpower<-LEDpower/1000
   ###
-  ### reshpae parameters for output
+  ### Reshpae parameters for output
   pars<-cbind(res$pars[1:ncomp], res$Stdpars[1:ncomp], 
               res$pars[-(1:ncomp)], res$Stdpars[-(1:ncomp)],
               res$pars[-(1:ncomp)]/LEDpower*E)
@@ -1036,7 +1111,7 @@ function(Sigdata,ncomp=3,typ=c("cw","lm"),
   colnames(pars)<-c("Ithn", "Std.Ithn", "Lamda", "Std.Lamda", "Pcs")
   rownames(pars)<-paste("Comp.", 1:ncomp, sep="")
   ###
-  ### reset parameters and errorflag
+  ### Reset parameters and errorflag
   if(typ=="cw") {
     if(all(pars[,c(2L,4L)]<0.0)) {
       pars[,c(2L,4L)]<-NA
@@ -1053,7 +1128,7 @@ function(Sigdata,ncomp=3,typ=c("cw","lm"),
     } # end if
   } # end if
   ###
-  ### calculate signal values for each component
+  ### Calculate signal values for each component
   if(transf==FALSE) {
     CompSig<-apply(cbind(pars[,1L], pars[,3L]), MARGIN=1,
              function(x) if(typ=="cw") x[1L]*exp(-x[2L]*tim) else 
@@ -1065,25 +1140,33 @@ function(Sigdata,ncomp=3,typ=c("cw","lm"),
              x[1L]*x[2L]*(tim/max(tim))*exp(-x[2L]*tim^2/2/max(tim)))
     SigProp<-pars[,1L]/sum(pars[,1L])
   } # end if
-  CompSig<-round(cbind(res$predtval, CompSig), 5L)
+  CompSig<-cbind(res$predtval, CompSig)
   colnames(CompSig)<-c("Fit.Signal", paste("Comp.", 1:ncomp, sep=""))
   ###
-  ### plot or not
+  ### Plot out result out or not ?
   if(plot==TRUE) {
-    ### set pars
+    ### Set layout
+    layout(cbind(c(1L,1L,1L,2L),c(1L,1L,1L,2L)))
+    ### Set plot pars
     par(bg="grey95",
-        mgp=c(2,1,0),
-        mar=c(3,3,2,1)+0.1)
-    ### add a scatter plot (Time .VS. Signal)
-    plot(tim, sig, main=samplename, log=ifelse(xlog==TRUE,"x",""), las=0, 
-         lab=c(7,7,9), ylim=c(-max(sig)*0.01, max(sig)*1.01),xlab="Stimulated Time (s)", cex.lab=1.25,
-         ylab="Photon Counts", xaxs="r", yaxs="i", type="p", pch=21, cex=ifelse(typ=="cw",1.5,1.25), bg="White", col="black") 
-    XaxisCentral<-median(axTicks(side=1))
-    ### set colors
+        mar=c(0,5.1,3.1,1.1))
+    ### Add a scatter plot (Time .VS. Signal)
+    plot(tim, sig, main=samplename, log=ifelse(xlog==TRUE,"x",""), las=0, cex.main=1.5,
+         lab=c(7,7,9), ylim=c(-max(sig)*0.01, max(sig)*1.01), cex.lab=1.5, xaxt="n", ylab="Photon Counts",
+         xaxs="r", yaxs="i", type="p", pch=21, cex=ifelse(typ=="cw",1.5,1.25), bg="white", col="black") 
+    XaxisCentral<-median(axTicks(side=1L))
+    ### Set colors
     colors<-c("blue", "red", "green", "deepskyblue", "purple", "orange", "brown")
     ###
-    ### lines Time .VS. Fitted values
-    x<-seq(min(tim),max(tim),by=sum(diff(tim))/(ntim-1)*0.1)
+    ### Lines Time .VS. Fitted values
+    if(ncol(Sigdata)==2L) {
+      ### For signal curve
+      x<-seq(min(tim),max(tim),by=(max(tim)-min(tim))/ntim/100L)
+    } else {
+      ### For signal table (CW)
+      x<-seq(min(tim),max(tim),by=(max(tim)-min(tim))/ntim/2L)
+    } # end if
+    ### If the model has been transfomed ?
     if(transf==FALSE) {
       if(typ=="cw") {
         lines(x, eval(parse(text=paste("pars[",1:ncomp,",1]*exp(-pars[",1:ncomp,",3]*x)",collapse="+",sep=""))), 
@@ -1102,7 +1185,7 @@ function(Sigdata,ncomp=3,typ=c("cw","lm"),
       } # end if
     } # end if
     ### 
-    ### lines Time .VS. Component signal (1 to ncomp)
+    ### Lines Time .VS. Component signal (1 to ncomp)
     for(i in 1:ncomp) {
       if(transf==FALSE) {
         if(typ=="cw") {
@@ -1119,140 +1202,443 @@ function(Sigdata,ncomp=3,typ=c("cw","lm"),
       } # end if
     } # end for
     ###
-    ### add a legend
+    ### Add a legend to the plot
     legend(ifelse(typ=="cw", "topright", ifelse(tim[which.max(sig)]>XaxisCentral, "topleft","topright")), 
            legend=c("Fitted.Curve", paste("Comp.", 1:ncomp," (",round(SigProp*100,2L),"%)", sep="")),
            col=c("black", colors[1:ncomp]), pch=c(21,rep(NA,ncomp)), lty="solid",
-           yjust=2, ncol=1, cex=1.25, bty="o", lwd=lwd, pt.bg="White")
-  ### add grid and box
+           yjust=2, ncol=1, cex=1.5, bty="o", lwd=lwd, pt.bg="white")
+  ### Add grid and box to the plot
   grid(equilogs=FALSE)
-  box(lwd=2)
+  box(lwd=2L)
   ###
-  ### reset pars brefore leaving
-  on.exit(par(bg="transparent",
-              mgp=c(3,1,0),
-              mar=c(5,4,4,2)+0.1))
+  ### Add residuals as a new plot
+  par(mar=c(5.1,5.1,0,1.1))
+  plot(tim, sig-CompSig[,1L], log=ifelse(xlog==TRUE,"x",""), las=0, lab=c(7,7,9), 
+       ylim=c(min(sig-CompSig[,1L])*1.01, max(sig-CompSig[,1L])*1.01),xlab="Stimulated Time (s)", cex.lab=1.5,
+       ylab="Residuals", xaxs="r", yaxs="i", type="o", pch=21, cex=ifelse(typ=="cw",0.75,0.5), bg="black", col="gray") 
+  abline(h=0)
+  box(lwd=2L)
+  ### Reset pars brefore leaving
+  par(bg="transparent",
+      mar=c(5,4,4,2)+0.1)
+  layout(1L)
   } # end if
   ###
-  ### results for output
+  ### Prepare results for output
   out<-list("Comp.Signal"=CompSig, "pars"=pars,
             "value"=res$value,     "errorflag"=errorflag)
   ###
-  ### wirte fitted signal values to a file or not
+  ### If wirte fitted signal values to a file or not ?
   if(!is.null(outfile)) {
     write.csv(CompSig, file=paste(outfile, ".csv"))
   } # end if
   ###
-  ### output is invisible!
+  ### Set output to be invisible!
   invisible(out)
 } # end function decomp
-######################################## END FUNCTION decomp ####################################
-
-########################################## FUNCTION sgcED ###############################################
-### *****************************************************************************************************
+############################################## END FUNCTION decomp ###################################################
+###
+################################################## FUNCTION fastED ###################################################
+### ***************************************************************************************************************
+### Function fastED() is used to calculate a fast-component equivalent dosee.
+### 
+###     Author: Peng Jun, 2013.11.21.
+###
+### References: Murray, A.S., Wintle, A.G., 2000. Luminescence dating of quartz using improved single-aliquot
+###             regenerative-dose protocol. Radiation Measurements, 32, pp.57-73.
+###
+###             Li, S.H., Li, B., 2006. Dose measurement using the fast component of LM-OSL signals from quartz.
+###             Radiation Measurements, 41, pp.534-541.
+###
+### Mandatory arguments---
+###    Sigdata: a data.frame, OSL decay curve (more than five columns).  
+###     Redose: a vector, regenerative doses used for dose response curve construction.    
+### ***************************************************************************************************************
+fastED<-
+function(Sigdata,Redose,ncomp=2,typ="cw",
+         control.args=list(),nstart=100,upb=1,
+         ErrorMethod=c("mc","sp"),origin=NULL) {
+  UseMethod("fastED")
+} #
+### Set default method for function fastED().
+fastED.default<-
+function(Sigdata,Redose,ncomp=2,typ="cw",
+         control.args=list(),nstart=100,upb=1,
+         ErrorMethod=c("mc","sp"),origin=NULL) {
+  ### Stop if not
+  ###
+  ### For argument "Sigdata"
+  if(!is.data.frame(Sigdata))                 stop("Error: Sigdata must be of type data.frame!")
+  if(ncol(Sigdata)<5L)                        stop("Error: Sigdata must contain at least five columns!")
+  if(ncol(Sigdata) %% 2L != 1L)               stop("Error: Sigdata must contain odd number of columns!")
+  if(!is.numeric(
+     unlist(unclass(Sigdata))))               stop("Error: all value in Sigdata must be of type numeric!")
+  if(any(Sigdata[,1L]<0.0))                   stop("Error: all value in the first column of Sigdata [time] must larger than zero!")
+  if(any(abs(Sigdata[,-1L]-round(Sigdata[,-1L]))>=.Machine$double.eps^0.5))
+                                              stop("Error: all signal values must be of type integer!")
+  if(any(Sigdata[,-1L]<0.0))                  stop("Error: all signal values must larger than zero!")
+  ###
+  ### For argument "Redose"
+  if(!is.numeric(Redose))                     stop("Error: Redose must be a numeric vector!")
+  if(any(Redose<0.0))                         stop("Error: all Redose values must larger than 0!")
+  if(!length(which(abs(Redose)<=.Machine$double.eps^0.5)) %in% c(0L,1L))         
+                                              stop("Error: only one zero-Redose is allowed!")
+  if(length(Redose)!=(ncol(Sigdata)-3L)/2L)   stop("Error: number of Redose values can not match number of decay curves!")
+  if(!(length(Redose)-length(as.numeric(levels(factor(Redose))))) %in% c(0L,1L))
+                                              stop("Error: only one repeated-Redose is allowed!")
+  ###
+  ### For argument "ncomp"
+  if(!is.numeric(ncomp))                      stop("Error: ncomp must be a numeric vector!")
+  if(length(ncomp)!=1L)                       stop("Error: ncomp must be an one-element vector!")
+  if(!ncomp%in% (2L:4L))                      stop("Error: ncomp must be an integer in the range [2,4]!")
+  ###
+  ### For argument "typ"
+  if(!is.character(typ))                      stop("Error: typ must be of type character!")
+  if(length(typ)!=1L)                         stop("Error: typ must be an one-element vector!")
+  if(typ!="cw")                               stop("Error: only CW-OSL can be analyzed currently!")
+  ###
+  ### For argument "control.args"
+  if(class(control.args)!="list")             stop("Error: control.args must be a list!")
+  if(length(control.args)>=6L)                stop("Error: number of parameters in control.args must not exceed 5!")
+  if(!all(names(control.args) %in% 
+     list("factor","f","cr",
+          "maxiter","tol")))                  stop("Error: incorrect name of parameter in control.args!")
+  ###
+  ### For argument "nstart"
+  if(!is.numeric(nstart))                     stop("Error: nstart must be of type numeric!")
+  if(length(nstart)!=1L)                      stop("Error: nstart must be an one-element vector!")
+  if(abs(nstart-round(nstart))
+     >=.Machine$double.eps^0.5)               stop("Error: nstart must be an integer!")
+  if(nstart<10L)                              stop("Error: nstart must larger than 10!")
+  if(nstart>5000L)                            stop("Error: nstart must not exceed 5000!") 
+  ###
+  ### For argument "upb"      
+  if(!is.numeric(upb))                        stop("Error: upb must be of type numeric!")
+  if(length(upb)!=1L)                         stop("Error: upb must be an one-element vector!")
+  if(upb<=0)                                  stop("Error: upb must larger than 0!")
+  if(upb>100)                                 stop("Error: upb must not exceed 100!")
+  ###
+  ### For argument "ErrorMethod"
+  if(!is.character(ErrorMethod))              stop("Error: ErrorMethod must be of type character!")
+  if(length(ErrorMethod)>2L)                  stop("Error: ErrorMethod must contain no more than two elements!")
+  if(length(ErrorMethod)==1L) {
+    if(!ErrorMethod %in%
+       c("sp","mc"))                          stop("Error: ErrorMethod must be either 'sp' or 'mc'!")
+  } else if(length(ErrorMethod==2L)) {
+    if(!all(ErrorMethod %in% 
+       c("sp","mc")))                         stop("Error: incorrect ErrorMethod, only 'sp' and 'mc' are available!")
+  } # end if
+  ###
+  ### For argument "origin"
+  if(!is.logical(origin) &&
+     !is.null(origin))                        stop("Error: origin must be either NULL or a logical variable!")
+  if(!is.null(origin)) {
+    if(length(origin)!=1L)                    stop("Error: origin must be an one-element vector!")
+  } # end if
+  ###
+  ###
+  ### Set function for region plotting
+  PlotRegion<-function(tim,sig,pars,samplename) {
+    ###
+    ### Add a scatter plot (Time .VS. Signal)
+    par(bg="grey95",
+        mgp=c(2,1,0),
+        mar=c(3,3,2,1)+0.1)
+    plot(tim, sig, main=samplename, log="x", las=0, cex.main=1.25, lab=c(7,7,9),
+         ylim=c(-max(sig)*0.01, max(sig)*1.01), cex.lab=1, xlab="Stimulated time (s)", ylab="Photon Counts",
+         xaxs="r", yaxs="i", type="p", pch=21, cex=1.5, bg="white", col="black") 
+    ###
+    ### Set colors
+    colors<-c("blue", "red", "green", "deepskyblue")
+    ###
+    ### Lines Time .VS. Fitted values
+    x<-seq(min(tim),max(tim),by=(max(tim)-min(tim))/length(tim)/100L)
+    lines(x, eval(parse(text=paste("pars[",1L:nrow(pars),",1L]*pars[",1L:nrow(pars),",3L]*exp(-pars[",1L:nrow(pars),",3L]*x)",collapse="+",sep=""))), 
+          lwd=3, col="black", lty="solid")
+    ### 
+    ### Lines Time .VS. Component signal (1 to ncomp)
+    for(i in 1:nrow(pars)) {
+      curve(pars[i,1L]*pars[i,3L]*exp(-pars[i,3L]*x), lwd=3, col=colors[i], lty="solid", add=TRUE)
+    } # end for
+    ###
+    ### Add a legend to the plot
+    legend("topright",legend=c("Fitted.Curve", paste("Comp.", 1L:nrow(pars), sep="")), col=c("black", colors[1L:nrow(pars)]), 
+           pch=c(21,rep(NA,nrow(pars))), lty="solid", yjust=2, ncol=1L, cex=par("cex"), bty="o", lwd=3, pt.bg="white")
+    ### Add grid and box to the plot
+    grid(equilogs=FALSE)
+    box(lwd=2L)
+    ### Reset plot pars before leaving
+    par(bg="transparent",
+        mgp=c(3,1,0),
+        mar=c(5,4,4,2)+0.1)
+    ###
+  } # end function PlotRegion
+  ###
+  ###
+  ### 
+  x<-ncol(Sigdata)-1L
+  fLtx<-matrix(nrow=x,ncol=2L)
+  pars<-vector("list",length=x)
+  ###
+  ### Analyze natural decay signal
+  res<-decomp(Sigdata[,c(1L,2L)], ncomp=ncomp, typ=typ, control.args=control.args, transf=TRUE, plot=FALSE)
+  if(res$errorflag!=0) {
+    stop("Error: natural decay curve can not be decomposed!")
+  } # end if
+  ### Set plot region
+  par(mfrow=c(ifelse(x%%4L==0L,x/4L+1L,x%/%4L+1L),4L))
+  ### Store pars of natural decay curve
+  pars[[1L]]<-res$pars[,-5L]
+  ### Store natural Lx and its std.error
+  fLtx[1L,]<-res$pars[which.max(res$pars[,3L]),c(1L,2L)]
+  ### Plot natural decay signal
+  PlotRegion(Sigdata[,1L,drop=TRUE], Sigdata[,2L,drop=TRUE], res$pars, samplename="Natural")
+  ###
+  ###
+  ### Analyze regenerative decay signals
+  for(i in 3L:ncol(Sigdata)) {
+    res<-try(decomp(Sigdata[,c(1L,i)], ncomp=ncomp, typ=typ, control.args=control.args, transf=TRUE, plot=FALSE), silent=TRUE)
+    ### Set name for each decay curve
+    samplename<-ifelse(i==3L,"Test[Natural]",ifelse(i%%2L==0L,paste("Redose.",i/2L-1L,sep=""), paste("Test[Redose.",(i-1L)/2L-1L,"]",sep="")))
+    ### Error checking and plot
+    if(class(res)!="try-error" && res$errorflag==0) {
+      ### Store pars of Lx or Tx and their std.error
+      pars[[i-1L]]<-res$pars[,-5L]
+      ### Store Lx or Tx and their std.error
+      fLtx[i-1L,]<-res$pars[which.max(res$pars[,3L]),c(1L,2L)]
+      ### Plot decay curve of Lx or Tx
+      PlotRegion(Sigdata[,1L,drop=TRUE], Sigdata[,i,drop=TRUE], res$pars, samplename=samplename)
+    } else {
+      print(paste("Warning: fail in decomposing the ",i-1L,"th decay curve!", sep=""))
+      par(bg="grey95", mgp=c(2,1,0), mar=c(3,3,2,1)+0.1)
+      plot(0.5,0.5,type="n",xaxt="n",yaxt="n",xlab="",ylab="",main=samplename)
+      text(0.5,0.5,labels="Fail",cex=par("cex")*2L)
+      grid(equilogs=FALSE)
+      box(lwd=2L)
+      par(bg="transparent", mgp=c(3,1,0), mar=c(5,4,4,2)+0.1)
+    } # end if
+  } # end for
+  ###
+  ###
+  ### Set fastRate
+  if(length(which(abs(Redose)<=.Machine$double.eps^0.5))==1L)  {
+    zeroDoseindex<-2L*which(abs(Redose)<=.Machine$double.eps^0.5)+1L
+    if(zeroDoseindex %in% which(sapply(pars,function(x) is.null(x))==FALSE) ) {
+      fastRate<-t(matrix(unlist(sapply(pars[-zeroDoseindex],function(x) x[,3L])),nrow=ncomp))[,1L,drop=TRUE]
+    } else {
+      fastRate<-t(matrix(unlist(sapply(pars,function(x) x[,3L])),nrow=ncomp))[,1L,drop=TRUE]
+    } # end if
+  } else {
+    fastRate<-t(matrix(unlist(sapply(pars,function(x) x[,3L])),nrow=ncomp))[,1L,drop=TRUE]
+  } # end if
+  fastRate<-c("mean"=mean(fastRate),"Std.mean"=sd(fastRate)/sqrt(length(fastRate)))
+  ###
+  ###
+  ### Set Curvedata and standarlized natural Lx/Tx
+  fLtx[,2L]<-fLtx[,2L]/fLtx[,1L]
+  fLxTx<-fLtx[(1L:nrow(fLtx))%%2L==1L,1L]/fLtx[(1L:nrow(fLtx))%%2L==0L,1L]
+  sfLxTx<-fLxTx*sqrt( (fLtx[(1L:nrow(fLtx))%%2L==1L,2L])^2 + (fLtx[(1L:nrow(fLtx))%%2L==0L,2L])^2 )
+  Curvedata<-data.frame(Redose,fLxTx[-1L],sfLxTx[-1L])
+  ### Remove NAs from Curvedata (for building dose-response curve)
+  Curvedata<-Curvedata[complete.cases(Curvedata),]
+  ### Set standardlized natural Lx/Tx
+  NatureLxTx<-c(fLxTx[1L],sfLxTx[1L]) 
+  if(any(!is.finite(NatureLxTx))) { 
+    stop("Error: fail in calculating standardlized natural Lx/Tx!")
+  } # end if
+  ###
+  ###
+  ### Calculate recycling ratio
+  if(length(Curvedata[,1L,drop=TRUE])-length(as.numeric(levels(factor(Curvedata[,1L,drop=TRUE]))))==1L) {
+    RepeatIndex<-apply(as.matrix(as.numeric(levels(factor(Curvedata[,1L,drop=TRUE])))), 1L, 
+                       function(x,y) which(abs(x-y)<=.Machine$double.eps^0.5) ,Curvedata[,1L,drop=TRUE])
+    RepeatIndex<-unlist(RepeatIndex[sapply(RepeatIndex,length)==2L])
+    RecycleRatio<-Curvedata[,2L][RepeatIndex[2L]]/Curvedata[,2L][RepeatIndex[1L]]
+  } else {
+    print("Warning: recycling ratio is not available!")
+    RecycleRatio<-NULL
+  } # end if
+  ###
+  ###
+  ### Calculate recuperation
+  if(length(which(abs(Curvedata[,1L])<=.Machine$double.eps^0.5))==1L) {
+    Recuperation<-Curvedata[which(abs(Curvedata[,1L])<=.Machine$double.eps^0.5),2L]/NatureLxTx[1L]
+    if(Recuperation>=0.2) {
+      Curvedata<-Curvedata[-which(abs(Curvedata[,1L])<=.Machine$double.eps^0.5),]
+      print("Warning: recuperation is too large and has been removed out from the dose response curve!")
+    } # end if
+  } else {
+    print("Warning: recuperation is not available!")
+    Recuperation<-NULL
+  } # end if
+  ###
+  ###
+  ### Fit dose response curve
+  Models<-c("line","exp","line+exp")
+  Origins<-if(is.null(origin)) c(TRUE,FALSE) else origin
+  minResidual<-1e30
+  ### Find the most approporate fitting model automatically.
+  for(i in Models) {
+    for(j in Origins) {
+      ### Try to call calED()
+      res<-try(calED(Curvedata, NatureLxTx, model=i, origin=j, nstart=nstart, upb=upb,
+                     ErrorMethod=ErrorMethod, nsim=100L, plot=FALSE), silent=TRUE)
+      ### Error checking
+      if(class(res)!="try-error") {
+        ###
+        if(res$residual<minResidual && all(is.finite(res$LMpars[,2L])) && all(res$LMpars[,1L]>0.0) && all(is.finite(res$ED)))  {
+          model<-i
+          origin<-j
+          minResidual<-res$residual
+        } # end if
+      } # end if
+    } # end for
+  } # end for
+  ###
+  ### Error checking
+  if(!exists("model")) {
+    par(bg="grey95", mgp=c(2,1,0), mar=c(3,3,2,1)+0.1)
+    plot(Curvedata[,c(1L,2L)],main="Dose Response Curve", pch=21, cex=3, bg="white", xlab="Dose (Gy)", ylab="Lx/Tx",
+         las=0, cex.main=1.25, cex.lab=1, xlim=c(0,max(Curvedata[,1L])), xaxs="i", yaxs="i", lab=c(7,7,9))
+    grid(equilogs=FALSE)
+    box(lwd=2L)
+    par(bg="transparent", mgp=c(3,1,0), mar=c(5,4,4,2)+0.1)
+    stop("Error: fail in equivalent dose calculation!")
+  } # end if
+  res<-calED(Curvedata, NatureLxTx, model=model, origin=origin, nstart=nstart, upb=upb, 
+             ErrorMethod=ErrorMethod, nsim=1000L, plot=TRUE, samplename="Dose Response Curve")
+  ### Reset par("mfrow")
+  par(mfrow=c(1,1))
+  ### Output results
+  list("pars"=pars,"fastRate"=fastRate, "Curvedata"=Curvedata, "Lxt"=NatureLxTx,
+       "model"=paste(model,"(origin=",origin,")",sep=""), "LMpars"=res$LMpars,
+       "residual"=res$residual, "ED"=res$ED, "RecyclingRatio"=RecycleRatio, 
+       "Recuperation"=Recuperation)
+  ###
+} # end function fastED()
+################################################# END FUNCTION fastED #################################################
+###
+################################################ FUNCTION sgcED ######################################################
+### ******************************************************************************************************************
 ### Function sgcED() is used to analyze equivalent doses using SGC method.
 ###
-###     Author: Peng Jun, 2013.06.23, revised in 2013.07.26, revised in 2013.08.02, revised in 2013.09.18
+###     Author: Peng Jun, 2013.06.23, revised in 2013.07.26, revised in 2013.08.02, revised in 2013.09.18,
+###             revised in 2013.11.12.
 ###
 ### References: Roberts,H.M. and Duller,G.A.T., 2004. Standardised growth curves for optical dating 
 ###             of sediment using multiple-grain aliquots. Radiation Measurements 38, pp. 241-252.
 ###
 ###             Duller, G.A.T., 2007. Assessing the error on equivalent dose estimates derived from 
 ###             single aliquot regenerative dose measurements. Ancient TL 25, pp. 15-24.
-### *****************************************************************************************************
+###
+### Mandatory arguments---
+### Curvedata: a data.frame, three columns, data used for constructing dose-response curve.
+###       Ltx: a data.frame, two columns that contains Lx/Tx and s(Lx/Tx), from which dose and std.dose can be obtained.
+### ********************************************************************************************************************
 sgcED<-
 function(Curvedata,Ltx,model=c("line","exp","line+exp"),
          origin=FALSE,nstart=100,upb=1,ErrorMethod=c("mc","sp"),
          nsim=1000,plot=TRUE,samplename=NULL,outfile=NULL)  {
    UseMethod("sgcED")
-}
-### Default method for function sgc.ED
+} #
+### Default method for function sgcED().
 sgcED.default<-
 function(Curvedata,Ltx,model=c("line","exp","line+exp"),
          origin=FALSE,nstart=100,upb=1,ErrorMethod=c("mc","sp"),
          nsim=1000,plot=TRUE,samplename=NULL,outfile=NULL)  {
   ### Stop if not
   ###
-  ### For Curvedata
-  if(!is.data.frame(Curvedata))          stop("Error: Curvedata must be of type data.frame!")
-  if(ncol(Curvedata)!=3L)                stop("Error: Curvedata must have three columns!")
+  ### For argument "Curvedata"
+  if(!is.data.frame(Curvedata))              stop("Error: Curvedata must be of type data.frame!")
+  if(ncol(Curvedata)!=3L)                    stop("Error: Curvedata must contain three columns!")
   if(!is.numeric(
-     unlist(unclass(Curvedata))))        stop("Error: elements in Curvedata must be all of type numeric!")
-  if(any(Curvedata<0.0))                 stop("Error: all elements in Curvedata must be not smaller than zero!")
-  ### For Ltx
-  if(!is.data.frame(Ltx))                stop("Error: Ltx must be a data.frame!")
-  if(ncol(Ltx)!=2L)                      stop("Error: Ltx must contains two columns!")
+     unlist(unclass(Curvedata))))            stop("Error: all values in Curvedata must be of type numeric!")
+  if(any(Curvedata<0.0))                     stop("Error: all values in Curvedata must not smaller than zero!")
+  ###
+  ### For argument "Ltx"
+  if(!is.data.frame(Ltx))                    stop("Error: Ltx must be a data.frame!")
+  if(ncol(Ltx)!=2L)                          stop("Error: Ltx must contains two columns!")
   if(!is.numeric(
-     unlist(unclass(Ltx))))              stop("Error: elements in Ltx must be all of type numeric!")
-  if(any(Ltx[,1L]>max(Curvedata[,2L])))  stop("Error: Ltx must not exceed maximum Lx/Tx in Curvedata!")
-  if(any(Ltx[,1L]<=0.0))                 stop("Error: Ltx must larger than zero!")
-  if(any(Ltx[,2L]<=0.0))                 stop("Error: std.error of Ltx must larger than zero!")
-  if(any(Ltx[,2L]>max(Curvedata[,2L])))  stop("Error: std.error of Ltx must not exceed maximum Lx/Tx in Curvedata!")
-  ### For model
-  if(!is.character(model))               stop("Error: model must be of type character!")
-  if(length(model)>=4L)                  stop("Error: model must contain no more than three elements!")
+     unlist(unclass(Ltx))))                  stop("Error: all values in Ltx must be of type numeric!")
+  if(any(Ltx[,1L]>max(Curvedata[,2L])*1.3))  stop("Error: all Ltx must not exceed maximum Lx/Tx in Curvedata!")
+  if(any(Ltx[,1L]<=0.0))                     stop("Error: all Ltx must larger than zero!")
+  if(any(Ltx[,2L]<=0.0))                     stop("Error: Std.Err of Ltx must larger than zero!")
+  if(any(Ltx[,2L]>max(Curvedata[,2L])*1.3))  stop("Error: Std.Err of Ltx must not exceed maximum Lx/Tx in Curvedata!")
+  ###
+  ### For argument "model"
+  if(!is.character(model))                   stop("Error: model must be of type character!")
+  if(length(model)>=4L)                      stop("Error: model must contain no more than three elements!")
   if(length(model)==1L) {
     if(!model %in% 
-       c("line","exp","line+exp"))       stop("Error: model must be one of 'line', 'exp', 'line+exp'!")
+       c("line","exp","line+exp"))           stop("Error: model must be one of 'line', 'exp', 'line+exp'!")
   } else if(length(model)>=2L) {
     if(!all(model %in% 
-       c("line","exp","line+exp")))      stop("Error: incorrect model!")
+       c("line","exp","line+exp")))          stop("Error: incorrect model, only 'line', 'exp' and 'line+exp' are available!")
   } # end if
-  ### For origin
-  if(!is.logical(origin))                stop("Error: origin must be of type logical!")
-  if(length(origin)!=1L)                 stop("Error: origin must be an one-element vector!")
-  ### For nstart
-  if(!is.numeric(nstart))                stop("Error: nstart must be of type numeric!")
-  if(length(nstart)!=1L)                 stop("Error: nstart must be an one-element vector!")
+  ###
+  ### For argument "origin"
+  if(!is.logical(origin))                    stop("Error: origin must be of type logical!")
+  if(length(origin)!=1L)                     stop("Error: origin must be an one-element vector!")
+  ###
+  ### For argument "nstart"
+  if(!is.numeric(nstart))                    stop("Error: nstart must be of type numeric!")
+  if(length(nstart)!=1L)                     stop("Error: nstart must be an one-element vector!")
   if(abs(nstart-round(nstart))
-     >=.Machine$double.eps^0.5)          stop("Error: nstart must be an integer!")
-  if(nstart<=1L)                         stop("Error: nstart must larger than 1!")
-  if(nstart>10000L)                      stop("Error: nstart is too large!") 
-  ### For upb         
-  if(!is.numeric(upb))                   stop("Error: upb must be of type numeric!")
-  if(length(upb)!=1L)                    stop("Error: upb must be an one-element vector!")
-  if(upb<=0)                             stop("Error: upb must larger than 0!")
-  if(upb>1e3)                            stop("Error: upb is too large!")
-  ### For ErrorMethod
-  if(!is.character(ErrorMethod))         stop("Error: ErrorMethod must be of type character!")
-  if(length(ErrorMethod)>=3L)            stop("Error: ErrorMethod must contain no more than two elements!")
+     >=.Machine$double.eps^0.5)              stop("Error: nstart must be an integer!")
+  if(nstart<10L)                             stop("Error: nstart must larger than 10!")
+  if(nstart>5000L)                           stop("Error: nstart must not exceed 5000!") 
+  ###
+  ### For argument "upb"         
+  if(!is.numeric(upb))                       stop("Error: upb must be of type numeric!")
+  if(length(upb)!=1L)                        stop("Error: upb must be an one-element vector!")
+  if(upb<=0)                                 stop("Error: upb must larger than 0!")
+  if(upb>100)                                stop("Error: upb must not exceed 100!")
+  ###
+  ### For argument "ErrorMethod"
+  if(!is.character(ErrorMethod))             stop("Error: ErrorMethod must be of type character!")
+  if(length(ErrorMethod)>=3L)                stop("Error: ErrorMethod must contain no more than two elements!")
   if(length(ErrorMethod)==1L) {
     if(!ErrorMethod %in%
-       c("sp","mc"))                     stop("Error: ErrorMethod must be either 'sp' or 'mc'!")
+       c("sp","mc"))                         stop("Error: ErrorMethod must be either 'sp' or 'mc'!")
   } else if(length(ErrorMethod==2L)) {
     if(!all(ErrorMethod %in% 
-       c("sp","mc")))                    stop("Error: incorrect ErrorMethod!")
+       c("sp","mc")))                        stop("Error: incorrect ErrorMethod, only 'sp' and 'mc' are available!")
   } # end if
-  ### For nsim
-  if(!is.numeric(nsim))                  stop("Error: nsim must be of type numeric!")
-  if(length(nsim)!=1L)                   stop("Error: nsim must be an one-element vector!")
+  ###
+  ### For argument "nsim"
+  if(!is.numeric(nsim))                      stop("Error: nsim must be of type numeric!")
+  if(length(nsim)!=1L)                       stop("Error: nsim must be an one-element vector!")
   if(abs(nsim-round(nsim))
-     >=.Machine$double.eps^0.5)          stop("Error: nsim must be an integer!")
-  if(nsim<100L)                          stop("Error: nsim is too small!")
-  if(nsim>10000L)                        stop("Error: nsim is too large!")
-  ### For plot
-  if(!is.logical(plot))                  stop("Error: plot must be either TRUE or FALSE!")
-  if(length(plot)!=1L)                   stop("Error: plot must be an one-element vector!")
-  ### For samplename
+     >=.Machine$double.eps^0.5)              stop("Error: nsim must be an integer!")
+  if(nsim<100L)                              stop("Error: nsim must not smaller than 100!")
+  if(nsim>1500L)                             stop("Error: nsim must not larger than 1500!")
+  ###
+  ### For argument "plot"
+  if(!is.logical(plot))                      stop("Error: plot must be either TRUE or FALSE!")
+  if(length(plot)!=1L)                       stop("Error: plot must be an one-element vector!")
+  ###
+  ### For argument "samplename"
   if(!is.character(samplename) &&
-     !is.null(samplename))               stop("Error: samplename must be NULL or of type character!")
+     !is.null(samplename))                   stop("Error: samplename must be NULL or of type character!")
   if(!is.null(samplename)) {
-    if(length(samplename)!=1L)           stop("Error: samplename must be an one-element vector!")
+    if(length(samplename)!=1L)               stop("Error: samplename must be an one-element vector!")
   } # end if
-  ### For outfile
+  ###
+  ### For argument "outfile"
   if(!is.null(outfile) &&
-     !is.character(outfile))             stop("Error: outfile must be NULL or of type character!")
+     !is.character(outfile))                 stop("Error: outfile must be NULL or of type character!")
   if(!is.null(outfile)) {
-    if(length(outfile)!=1L)              stop("Error: outfile must be an one-element vector!")
+    if(length(outfile)!=1L)                  stop("Error: outfile must be an one-element vector!")
   } # end if
+  ###
   ###
   ### Set default model (linear)
   model<-model[1L]
   ###
-  ### Set default ErrorMethod ('mc')
+  ### Set default ErrorMethod (monte carlo)
   ErrorMethod<-ErrorMethod[1L]
   ###
-  ### Check if data is enough for model fitting
+  ### Check if observations are enough for model fitting
   if(origin==TRUE) {
     if(model=="line" && length(levels(factor(Curvedata[,1L])))<1L) {
       stop("Error: fitting a linear model (origin) needs at least one paired independent observations!")
@@ -1269,7 +1655,7 @@ function(Curvedata,Ltx,model=c("line","exp","line+exp"),
     stop("Error: fitting a linear+exponential model needs at least four paired independent observations!")
   } # end if
   ### 
-  ### Parameters for subroutine "sgcED.f90" or "sgcED2.f90"
+  ### Parameters for subroutine sgcED() or sgcED2()
   Dose<-drop(Curvedata[,1L])
   ltx<-cbind(drop(Curvedata[,2L]), drop(Curvedata[,3L]))
   ndose<-length(Dose)
@@ -1302,7 +1688,7 @@ function(Curvedata,Ltx,model=c("line","exp","line+exp"),
   ###
   ### Error checking
   if(res$errorflag[1L]!=123) {
-    stop("Error: fail in Dose-Response curve fitting, fitting model might be inappropriate, or upb need to be modified!")
+    stop("Error: fail in dose-response curve fitting, fitting model might be inappropriate, or upb need to be modified!")
   } # end if
   ###
   ### Set LMpars
@@ -1321,8 +1707,8 @@ function(Curvedata,Ltx,model=c("line","exp","line+exp"),
   ###
   ### Set ED values
   ED<-matrix(res$outDose,ncol=2L)
-  if(all(!is.finite(ED[,2L]))) {
-    stop("Error: fail in estimating standard errors of equivalent doses!")
+  if(any(!is.finite(ED[,2L]))) {
+    print("Warning: some standard errors of equivalent doses can not be estimated!")
   } # end if
   rownames(ED)<-paste("NO.", 1:ninltx, sep="")
   colnames(ED)<-c("ED", "Std.ED")
@@ -1342,10 +1728,8 @@ function(Curvedata,Ltx,model=c("line","exp","line+exp"),
     Ylim<-max(Curvedata[,2L],Ltx[,1L])
     ###
     ### Plot a dose-response curve
-    plot(NA, NA, main=samplename, las=0,
-         xlab="Dose (Gy)", ylab="Lx/Tx", cex.lab=1.25,
-         xlim=c(0,Xlim*1.05), ylim=c(0,Ylim*1.05),
-         xaxs="i", yaxs="i", lab=c(7,7,9) )
+    plot(NA, NA, main=samplename, xlab="Dose (Gy)", ylab="Lx/Tx", las=0, cex.lab=1,
+         cex.main=1.25, xlim=c(0,Xlim*1.05), ylim=c(0,Ylim*1.05), xaxs="i", yaxs="i", lab=c(7,7,9) )
     ###
     ### Add ReDose as points
     points(Curvedata[,c(1L,2L)], pch=21, cex=3, bg="white")
@@ -1365,10 +1749,10 @@ function(Curvedata,Ltx,model=c("line","exp","line+exp"),
     } # end if
     ###
     ### Add error bars to calculated ED
-    if(all(is.finite(ED[,2L]))) {
+    if(any(is.finite(ED[,2L]))) {
       if(any(ED[,2L]>=1e-3)) {
-        arr<-suppressWarnings(try(arrows(ED[ED[,2L]>=1e-3,1L]-ED[ED[,2L]>=1e-3,2L]/2,Ltx[ED[,2L]>=1e-3,1L],
-                                         ED[ED[,2L]>=1e-3,1L]+ED[ED[,2L]>=1e-3,2L]/3, Ltx[ED[,2L]>=1e-3,1L], 
+        arr<-suppressWarnings(try(arrows(ED[is.finite(ED[,2L]) & ED[,2L]>=1e-3,1L]-ED[is.finite(ED[,2L]) & ED[,2L]>=1e-3,2L]/2,Ltx[is.finite(ED[,2L]) & ED[,2L]>=1e-3,1L],
+                                         ED[is.finite(ED[,2L]) & ED[,2L]>=1e-3,1L]+ED[is.finite(ED[,2L]) & ED[,2L]>=1e-3,2L]/3,Ltx[is.finite(ED[,2L]) & ED[,2L]>=1e-3,1L], 
                                          code=3, lwd=2.5, angle=90, length=0.05, col="black"), silent=TRUE))
       } # end if
     } # end if
@@ -1410,9 +1794,9 @@ function(Curvedata,Ltx,model=c("line","exp","line+exp"),
     grid()
     box(lwd=2)
     ### Reset plot(par) before leaving
-    on.exit(par(bg="transparent",
-                mgp=c(3,1,0),
-                mar=c(5,4,4,2)+0.1))
+    par(bg="transparent",
+        mgp=c(3,1,0),
+        mar=c(5,4,4,2)+0.1)
   } # end if
   ###
   ### Write equivalent doses out or not

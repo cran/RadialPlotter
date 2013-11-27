@@ -165,7 +165,7 @@ subroutine calED(Dose,ltx,ndose,inltx,outDose,pars,npars,predtval,upb,&
   maxDose=maxval(Dose)
   ! Calculate equivalent dose using inltx(1), store in outDose(1)
   call interpolate(outDose(1),inltx(1),pars,npars,&
-                   0.0D+00,maxDose*1.1D+00,minvalue)
+                   0.0D+00,maxDose*1.3D+00,minvalue)
   ! Estimate standard error of equivalent dose
   if(method==1) then  
     ! 1) Method 1, simple transformation
@@ -174,7 +174,7 @@ subroutine calED(Dose,ltx,ndose,inltx,outDose,pars,npars,predtval,upb,&
     upltx =inltx(1)+dsqrt((inltx(2))**2+averageErr)
     ! Calculate low bounded ED, store it in lowup(1)
     call interpolate(lowup(1),lowltx,pars,npars,&
-                     0.0D+00,maxDose,minvalue)
+                     0.0D+00,maxDose*1.3D+00,minvalue)
     ! Calculate up bounded ED, store it in lowup(2)
     call interpolate(lowup(2),upltx,pars,npars,&
                      0.0D+00,maxDose*1.3D+00,minvalue)

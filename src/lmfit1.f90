@@ -56,7 +56,7 @@ subroutine lmfit1(xdat,ydat,ndat,pars,npars,calErr,&
   integer(kind=4),dimension(2),    intent(out)::info
   !
   ! Variables for subroutine lmhess()
-  real   (kind=8),parameter::lmtol=1.0D-09           ! maximum tolerance for singular matrix diagnosation 
+  real   (kind=8),parameter::lmtol=2.220446D-16      ! maximum tolerance for singular matrix diagnosation (.Machine$double.eps in R)
   real   (kind=8),parameter::minAbsPar=0.0D+00       ! used in lmhess 
   real   (kind=8),dimension(npars,npars)::hessian    ! hessian matrix obtained with finite-difference approximation
   real   (kind=8),dimension(npars)::gradient         ! gradient obtained with finite-difference approximation

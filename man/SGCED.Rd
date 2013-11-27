@@ -2,10 +2,10 @@
 \alias{sgcED}
 \alias{sgcED.default}
 \title{
-Fitting dose-response curve and calculating equivalent dose using standardised growth curves (SGC) method
+Fitting dose response curve and calculating equivalent dose using standardised growth curves (SGC) method
 }
 \description{
-Its a wrapped version of function calED(), fitting OSL dose-response curve and calculating equivalent dose values using standardised growth curves (SGC) method after Roberts HM and Duller GAT (2004), the errors of equivalent doses are estimated after Duller GAT (2007). It is based on the fact that using information collected as part of standard SAR measurements, it is possible to construct reproducible patterns of growth from multiple-grain aliquots of a large number of samples (Roberts HM and Duller GAT, 2004).
+Its a wrapped version of function calED(), fitting OSL dose response curve and calculating equivalent dose values using standardised growth curves (SGC) method after Roberts HM and Duller GAT (2004), the errors of equivalent doses are estimated after Duller GAT (2007). It is based on the fact that using information collected as part of standard SAR measurements, it is possible to construct reproducible patterns of growth from multiple-grain aliquots of a large number of samples (Roberts HM and Duller GAT, 2004).
 }
 \usage{
 sgcED(Curvedata, Ltx, 
@@ -18,7 +18,7 @@ sgcED(Curvedata, Ltx,
 }
   \item{Ltx}{\link{data.frame}(\bold{required}): two columns (standardized signals and its standard errors), from which equivalent doses can be estimated by interpolating 
 }
-  \item{model}{\link{character}(with default): a model("linear", "exponential" or "linear+exponential") used for fitting the dose-response curve, the same as that in function \link{calED}
+  \item{model}{\link{character}(with default): a model("linear", "exponential" or "linear+exponential") used for fitting the dose response curve, the same as that in function \link{calED}
 }
   \item{origin}{\link{logical}(optional): whether force the fitting to pass the origin (x=0,y=0) or not
 }
@@ -42,7 +42,7 @@ see function \link{calED}() for details.
 }
 \value{
   Return a visible list that contains following elements:
-  \item{LMpars}{characteristic parameters and standard errors of the dose-response curve obtained by Levenberg-Marquardt method}
+  \item{LMpars}{characteristic parameters and standard errors of the dose response curve obtained by Levenberg-Marquardt method}
   \item{residual}{sum of square of residual errors}
   \item{fit.value}{observations .VS. fitted values}
   \item{ED}{estimated equivalent doses (standard errors)}
@@ -75,7 +75,7 @@ Yang, L.H., Lai, Z.P., Long, H., Zhang, J.R., 2011. Construction of a quartz OSL
  ltx<-cbind(ltx1,ltx2,ltx3,ltx4,ltx5)
  ltx<-cbind(apply(ltx,MARGIN=1,mean),
             apply(ltx,MARGIN=1,sd))  # means an standard deviations
- redose<-c(0,18,36,54,72,0,18)       # the same Re-Dose for the five aliquots
+ redose<-c(0,18,36,54,72,0,18)       # the same ReDose for the five aliquots
  Curvedata<-data.frame(redose,ltx)
  Ltx<-data.frame(c(0.5,1.0,1.8,2.3,2.8,3.1,3.6,4.0),
                  rep(0.1,8))         # Lx/Txs from which EDs are expected

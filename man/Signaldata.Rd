@@ -2,7 +2,7 @@
 \alias{Signaldata}
 \docType{data}
 \title{
-Signaldata is used for exemplifying the usage of function decomp
+Signaldata is used for exemplifying the usage of function decomp() and fastED()
 }
 \description{
 OSL signal data of type "CW" and "LM".
@@ -11,13 +11,14 @@ OSL signal data of type "CW" and "LM".
 \format{
   A list contains both OSL decay curve data of type "CW" and "LM"
   \describe{
-    \item{cw}{a data.frame of OSL signal decay data of type "CW" measured over 40 s in 250 equal width channels, which is
-the nature OSL signal of a sample from Tengger Desert in northern china (Peng and Han, 2013)}
-    \item{lm}{a data.frame of synthesized OSL signal decay data of type "LM" over 3600s with a1=1e3, a2=1e3, a3=1e4, a4=1e4, a5=1e5, b1=10.5, b2=2.5, b3=0.5, b4=0.05, b5=0.005}
+    \item{cw}{a series of OSL decay curve of type "CW" obatined with SAR method that from Tengger Desert in northern china (Peng and Han, 2013)}
+    \item{lm}{a data.frame of OSL signal decay data of type "LM" from Li and Li (2006)}
 }
 }
 \references{
-Peng, J., Han, F.Q., 2013. Selections of fast-component OSL signal using sediments from the south edge of Tengger Desert. Acta Geoscientica Sinica, 34 (1), pp. 1-7.
+Li, S.H., Li, B., 2006. Dose measurement using the fast component of LM-OSL signals from quartz. Radiation Measurements, 41, pp.534-541.
+
+Peng, J., Han, F.Q., 2013. Selections of fast-component OSL signal using sediments from the south edge of Tengger Desert. Acta Geoscientica Sinica, 34 (6), pp. 757-762.
 }
 \examples{
 data(Signaldata)

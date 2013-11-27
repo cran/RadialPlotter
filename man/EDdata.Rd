@@ -18,7 +18,7 @@ A list contains two sets of equivalent dose values
 \references{
 Schmidt, S., Tsukamoto, S., Salomon, E., Frechen, M., Hetzel, R., 2012. Optical dating of alluvial deposits at the orogenic front of the andean precordillera (Mendoza, Argentina). Geochronometria, 39 (1), pp. 62-75.
 
-Peng, J., Han, F.Q., 2013. Selections of fast-component OSL signal using sediments from the south edge of Tengger Desert. Acta Geoscientica Sinica, 34 (1), pp. 1-7.
+Peng, J., Han, F.Q., 2013. Selections of fast-component OSL signal using sediments from the south edge of Tengger Desert. Acta Geoscientica Sinica, 34 (6), pp. 757-762.
 }
 \examples{
 # loading the equivalent dose data

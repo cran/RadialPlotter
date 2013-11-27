@@ -3,10 +3,11 @@
 \docType{package}
 \title{Numeric routines for optical stimulated luminescence dating}
 \description{
-Four functions that wrapped with Fortran subroutines are available in package "RadialPlotter" currently.\cr\cr
-Function calED() fits dose-response curve and calculates equivalent dose in optically stimulated luminescence, assiociated standard error of equivlalent dose can also be estimated using either simple transformation or monte Carlo method (Duller, 2007).\cr\cr
+Five functions that wrapped with Fortran subroutines are available in package "RadialPlotter" currently.\cr\cr
+Function calED() fits dose-response curve and calculates equivalent dose in optically stimulated luminescence dating, assiociated standard error of equivlalent dose can also be estimated using either simple transformation or monte Carlo method (Duller, 2007).\cr\cr
 Function decomp() decomposes the OSL decay curve (type "CW" or "LM") to a specified number of components, which supports the combination of differential evolution and
 Levenberg-Marquardt algorithm suggested by Bluszcz and Adamiec (2006).\cr\cr
+Function fastED() approximates a fast-component equivalent dose with data abtained by the single aliquot regenerative (SAR) protocol (Murray and Wintle, 2000).\cr\cr
 Function RadialPlotter() performs statistical age models (log-scale) analysis (Galbraith and Roberts, 2012) and radial plot drawing (Galbraith, 1988). Routines for statistical age models analysis include: \cr
 Central age model (CAM) \cr
 Finite mixture age model (FMM) \cr
@@ -18,8 +19,8 @@ Function sgcED() is a wrapped version of function calED(), fitting OSL dose-resp
 \tabular{ll}{
 Package: \tab RadialPlotter\cr
 Type: \tab Package\cr
-Version: \tab 2.1\cr
-Date: \tab 2013-10-22\cr
+Version: \tab 2.2\cr
+Date: \tab 2013-11-27\cr
 License: \tab GPL-3\cr
 }
 }

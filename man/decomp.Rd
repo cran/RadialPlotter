@@ -2,7 +2,7 @@
 \alias{decomp}
 \alias{decomp.default}
 \title{
-Decomposition decay curve in optically stimulated luminescence (OSL) dating
+Decomposition decay curve in OSL dating
 }
 \description{
 Function decomp() decomposes the OSL decay curve (type "CW" or "LM") to a specified number of components.
@@ -18,7 +18,7 @@ decomp(Sigdata,
 \arguments{
   \item{Sigdata}{\link{data.frame}(\bold{required}): two columns, time (t1,t2,ect) and correspond signal values (s1,s2,ect) to be decomposed
 }
-  \item{ncomp}{\link{numeric}(with default): the number of components to be decomposed, which must be an integer in a range of 1 to 7
+  \item{ncomp}{\link{numeric}(with default): the number of components to be decomposed, which must be an integer in the range [1,7]
 }
   \item{typ}{\link{character}(with default): type ("cw" or "lm") of the OSL decay curve, default typ="cw"
 }
@@ -46,7 +46,7 @@ This function decomposes OSL decay curve to a specified number of components usi
 Levenberg-Marquardt algorithm. Both OSL decay curve of type "CW" and "LM" can be decomposed.\cr
 For OSL decay curve of type "CW", the fitting model (accroding to Bluszcz and Adamiec, 2006) is:\cr\cr
 I(t)=a1*exp(-b1*t)+a2*exp(-b2*t)+...+ak*exp(-bk*t) , k=1, 2, ..., 7, which is identical to:\cr\cr
-I(t)=a1*b1*exp(-b1*t)+a2*b2*exp(-b2*t)+...+ak*bk*exp(-bk*t) , k=1, 2, ..., 7 if "transf" is setted to be TRUE.\cr\cr
+I(t)=a1*b1*exp(-b1*t)+a2*b2*exp(-b2*t)+...+ak*bk*exp(-bk*t) , k=1, 2, ..., 7 if "transf" is set to be TRUE.\cr\cr
 where I(t) is the luminescence intensity as a function of time(t), a is the number of trapped electrons, b is the detrapping rates. Initial parameters are estimated using the differential evolution method suggested by Bluszcz A and Adamiec G (2006), then Levenberg-Marquardt algorithm (minpack: original FORTRAN 77 version by Jorge More, Burton Garbow, Kenneth Hillstrom. FORTRAN 90 version by John Burkardt) will be performed to obtain a final optimization. In some radical cases, differential evolution will fail in parameter initializing, or Levenberg-Marquardt algorithm may fails, then a serise of simple attempts will be carryed out using Levenberg-Marquardt algorithm. Arguments (control.args) that employed to control the performance of differential evolution algorithm are:\cr\cr
 \bold{factor}: used for control the number of parents (NP), np=factor*ncomp, default factor=15; \cr
 \bold{f}: weighting factor, ranging from 0 to 1.2, default f=0.5; \cr
@@ -58,12 +58,12 @@ For OSL decay curve of type "LM", the fitting model (accroding to Bulur E, 2000)
 I(t)=a1*(t/P)*exp(-b1*t^2/(2*P))+a2*(t/P)*exp(-b2*t^2/(2*P))+...+\cr
 ak*(t/P)*exp(-bk*t^2/(2*P)) , k=1, 2, ..., 7, which is identical to:\cr\cr
 I(t)=a1*b1*(t/P)*exp(-b1*t^2/(2*P))+a2*b2*(t/P)*exp(-b2*t^2/(2*P))+...+\cr
-ak*bk*(t/P)*exp(-bk*t^2/(2*P)) , k=1, 2, ..., 7 if "transf" is setted to be TRUE\cr\cr
+ak*bk*(t/P)*exp(-bk*t^2/(2*P)) , k=1, 2, ..., 7 if "transf" is set to be TRUE\cr\cr
 where I(t) is the luminescence intensity as a function of time(t), P is the total stimulation time, a is the number of trapped electrons, b is the detrapping rates. Initial detrapping rates are estimated using the detrapping values described after Jain et al. (2003). Possible combinations of detrapping rates for a given component are calculated using permutation and combinations. For example, if ncomp=3, then the possible number of combinations is C(3,7)=35. Then for each combination that contains three detrapping rates, the correspond number of trapped electrons can be coarsely obtained using Linear Algebra method outlined by Bluszcz A (1996). Then the Levenberg-Marquardt algorithm will be used to optimize the finial result.\cr\cr
 }
 \value{
 Return an invisible list containing following elements:\cr
-  \item{Comp.Signal}{fitted values for observations as well as for each component}
+  \item{Comp.Signal}{fitted values for observations and each component}
   \item{pars}{estimated parameters and associated standard errors}
   \item{value}{sum of square of residual errors}
   \item{errorflag}{error message generated during the calculation, if parameters' standard errors can be estimated, errorflag=0, else 1}
@@ -87,24 +87,31 @@ Adamiec, G., 2005. OSL decay curves-relationship between single- and multiple-gr
 
 Choi, J.H., Duller G.A.T., Wintle, A.G., 2006. Analysis of quartz LM-OSL curves. Ancient TL, 24, pp. 9-20.
 
+Li, S.H., Li, B., 2006. Dose measurement using the fast component of LM-OSL signals from quartz. Radiation Measurements, 41, pp.534-541.
 }
 
 \note{Both LEDpower and LEDwavelength are used for determining the absolute photoionisation cross section. However, the estimated absolute photoionisation cross section (pcs) may not so reliable as it seems to be, because both LEDpower and LEDwavelength will vary with the age of the instrument.\cr\cr
 For fitting OSL decay curve of type "CW", in most cases, parameters can be initialized by differential evolution method, but sometimes Levenberg-Marquardt algorithm fails to obtain a final optimization (that's exactly the truth as the increasing of the number of components, which might indicate overcharging of the model), if this happened, parameters initialized with differential evolution method will be regarded as the final estimation.\cr\cr
-I thank Andrzej Bluszcz, who helps me a lot during the writting of this function. Jeong-Heon Chio is thanked for providing published data (Chio et al, 2006) to test this routine.
+I thank Andrzej Bluszcz, who helps me a lot during the writting of this function. Jeong-Heon Chio (Chio et al, 2006) and Bo Li (Li and Li, 2006) are thanked for providing published data to test this routine.
 }
 
 \examples{
  # loading signal data
  data(Signaldata)
- # decompose OSL signal of type "CW" to 3 components
- res<-decomp(Signaldata$cw,ncomp=3,typ="cw",xlog=FALSE,samplename="GL1")
+ #
+ # decompose natural OSL signal of type "CW" to 3 components
+ res<-decomp(Signaldata$cw[,c(1,2)],ncomp=3,typ="cw",xlog=FALSE,samplename="GL1")
  res 
- # reset factor, maxiter and decompose signal to 5 components
- res<-decomp(Signaldata$cw,ncomp=5,control.args=list(factor=10,maxiter=500))
+ #
+ # decompose the whole signal table (exclude the zero-redose decay curve)
+ decomp(Signaldata$cw[,-12])$pars
+ #
+ # reset factor, maxiter and decompose a regenerative decay curve to 5 components
+ res<-decomp(Signaldata$cw[,c(1,10)],ncomp=5,control.args=list(factor=10,maxiter=500))
  print(res)
- # decompose OSL signal of type "LM" to 5 components
- res<-decomp(Signaldata$lm,ncomp=5,typ="lm")
+ #
+ # decompose OSL signal of type "LM" to 4 components
+ res<-decomp(Signaldata$lm,ncomp=4,typ="lm")
  print(res)
 }
 

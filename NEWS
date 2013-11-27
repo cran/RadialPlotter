@@ -1,7 +1,10 @@
 Versions of package "RadialPlotter"
+Version 2.2
+        * Add one new function "fastED()", which is used to approximate the fast-component equivalent dose.
+          Now function "decomp()" is able to decompose a signal table (a series of decay curves from a single aliquot) simultaneously.
 Version 2.1
-        * Function "decomp()" now allows some transformations between different fitting models; optional argument "xylim" in function "calED()"
-          and "sgcED()" has been removed.
+        * Function "decomp()" now allows some transformations between different fitting models; optional argument "xylim" in function "decomp()"
+          has been removed.
 Version 2.0
         * Plot output by function "decomp()" and "RadialPlotter()" have been modified to be more dynamically by adding some plus options; 
           Function "calED()" and "sgcED()" now allow forcing the fitting to pass the origin optionally.

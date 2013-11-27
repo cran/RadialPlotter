@@ -159,7 +159,7 @@ subroutine sgcED2(Dose,ltx,ndose,ninltx,inltx,outDose,pars,npars,predtval,&
   maxDose=maxval(Dose)
   do i=1,ninltx
     call interpolate2(outDose(i,1),inltx(i,1),pars,npars,&
-                      0.0D+00,maxDose*1.1D+00,minvalue)
+                      0.0D+00,maxDose*1.3D+00,minvalue)
   end do
   ! Calculate standard errors of ED values
   if(method==1) then
@@ -170,7 +170,7 @@ subroutine sgcED2(Dose,ltx,ndose,ninltx,inltx,outDose,pars,npars,predtval,&
     do i=1,ninltx
       ! Calculate low bounded Equivalent Dose
       call interpolate2(lowup(i,1),lowltx(i),pars,npars,&
-                        0.0D+00,maxDose,minvalue)
+                        0.0D+00,maxDose*1.3D+00,minvalue)
       ! Calculate up bounded Equivalent Dose
       call interpolate2(lowup(i,2),upltx(i),pars,npars,&
                         0.0D+00,maxDose*1.3D+00,minvalue)
